@@ -1,0 +1,19 @@
+name = "Physis"
+uuid = "2ecc2e12-fc05-4aee-8f17-2c689556ff2e"
+version = "0.1.0"
+authors = ["Cole Christensen <cole.christensen@macmillan.com>"]
+
+[deps]
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
+
+[compat]
+julia = "1.10"
+StaticArrays = "1"
+StableRNGs = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

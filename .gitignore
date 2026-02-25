@@ -1,0 +1,22 @@
+# Julia
+Manifest.toml
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+deps/build.log
+
+# System
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Render output (generated, not committed)
+docs/gallery/
+docs/renders/
+*.glb
+*.gltf
+
+# Blender
+*.blend1
