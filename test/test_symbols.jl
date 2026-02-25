@@ -1,16 +1,16 @@
 @testset "Symbols" begin
-    @testset "Plain Symbol creation" begin
-        f = Physis.Symbol('F')
+    @testset "Plain LSymbol creation" begin
+        f = LSymbol('F')
         @test name(f) == 'F'
 
-        plus = Physis.Symbol('+')
+        plus = LSymbol('+')
         @test name(plus) == '+'
     end
 
-    @testset "Plain Symbol equality and hashing" begin
-        a = Physis.Symbol('A')
-        a2 = Physis.Symbol('A')
-        b = Physis.Symbol('B')
+    @testset "Plain LSymbol equality and hashing" begin
+        a = LSymbol('A')
+        a2 = LSymbol('A')
+        b = LSymbol('B')
 
         @test a == a2
         @test a != b
@@ -18,8 +18,8 @@
         @test hash(a) != hash(b)
     end
 
-    @testset "Plain Symbol show" begin
-        f = Physis.Symbol('F')
+    @testset "Plain LSymbol show" begin
+        f = LSymbol('F')
         @test sprint(show, f) == "F"
     end
 
@@ -74,9 +74,9 @@
     end
 
     @testset "matches()" begin
-        f1 = Physis.Symbol('F')
-        f2 = Physis.Symbol('F')
-        g = Physis.Symbol('G')
+        f1 = LSymbol('F')
+        f2 = LSymbol('F')
+        g = LSymbol('G')
 
         @test matches(f1, f2)
         @test !matches(f1, g)
@@ -91,7 +91,7 @@
         @test !matches(pa1, pa3)
 
         # Different types → no match
-        plain_a = Physis.Symbol('A')
+        plain_a = LSymbol('A')
         @test !matches(plain_a, pa1)
         @test !matches(pa1, plain_a)
     end
@@ -99,8 +99,8 @@ end
 
 @testset "LString" begin
     @testset "Construction from symbols" begin
-        f = Physis.Symbol('F')
-        plus = Physis.Symbol('+')
+        f = LSymbol('F')
+        plus = LSymbol('+')
         ls = LString([f, plus, f])
 
         @test length(ls) == 3
@@ -112,10 +112,10 @@ end
     @testset "Construction from string" begin
         ls = LString("F+F-F")
         @test length(ls) == 5
-        @test ls[1] == Physis.Symbol('F')
-        @test ls[3] == Physis.Symbol('F')
-        @test ls[2] == Physis.Symbol('+')
-        @test ls[4] == Physis.Symbol('-')
+        @test ls[1] == LSymbol('F')
+        @test ls[3] == LSymbol('F')
+        @test ls[2] == LSymbol('+')
+        @test ls[4] == LSymbol('-')
     end
 
     @testset "Iteration" begin
@@ -130,27 +130,32 @@ end
         @test length(ls) == 0
     end
 
-    @testset "Push and append" begin
-        ls = LString("F")
-        push!(ls, Physis.Symbol('+'))
-        @test length(ls) == 2
-        @test ls[2] == Physis.Symbol('+')
+    @testset "Iterator traits" begin
+        @test Base.IteratorSize(LString) == Base.HasLength()
+        @test Base.IteratorEltype(LString) == Base.HasEltype()
+        @test eltype(LString) == AbstractSymbol
+    end
 
-        ls2 = LString("-F")
-        append!(ls, ls2)
-        @test length(ls) == 4
+    @testset "Copy independence" begin
+        ls1 = LString("FG")
+        ls2 = copy(ls1)
+        @test ls1 == ls2
+        # Mutating the internal vector of one must not affect the other
+        push!(ls2.symbols, LSymbol('+'))
+        @test length(ls1) == 2
+        @test length(ls2) == 3
     end
 
     @testset "Mixed parametric and plain symbols" begin
         syms = AbstractSymbol[
-            Physis.Symbol('F'),
+            LSymbol('F'),
             ParametricSymbol('A', (10.0,)),
-            Physis.Symbol('+'),
+            LSymbol('+'),
             ParametricSymbol('B', (1.0, 2.0)),
         ]
         ls = LString(syms)
         @test length(ls) == 4
-        @test ls[1] isa Physis.Symbol
+        @test ls[1] isa LSymbol
         @test ls[2] isa ParametricSymbol
         @test arity(ls[2]) == 1
         @test ls[4] isa ParametricSymbol
@@ -172,7 +177,7 @@ end
 
         # With parametric symbols
         syms = AbstractSymbol[
-            Physis.Symbol('F'),
+            LSymbol('F'),
             ParametricSymbol('A', (10.0,)),
         ]
         ls2 = LString(syms)
@@ -183,7 +188,7 @@ end
         ls = LString("ABCDE")
         sub = ls[2:4]
         @test length(sub) == 3
-        @test sub[1] == Physis.Symbol('B')
-        @test sub[3] == Physis.Symbol('D')
+        @test sub[1] == LSymbol('B')
+        @test sub[3] == LSymbol('D')
     end
 end

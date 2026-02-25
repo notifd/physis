@@ -1,5 +1,5 @@
 """
-    symbols.jl — L-system alphabet: Symbol, ParametricSymbol, LString
+    symbols.jl — L-system alphabet: LSymbol, ParametricSymbol, LString
 
 Symbol types represent the alphabet of an L-system. Plain symbols carry only
 a character; parametric symbols additionally carry a tuple of Float64 parameters.
@@ -25,24 +25,24 @@ abstract type AbstractSymbol end
 # ──────────────────────────────────────────────────────────────────
 
 """
-    Symbol(char)
+    LSymbol(char)
 
 A plain (non-parametric) L-system symbol identified by a single `Char`.
 """
-struct Symbol <: AbstractSymbol
+struct LSymbol <: AbstractSymbol
     char::Char
 end
 
-Base.:(==)(a::Symbol, b::Symbol) = a.char == b.char
-Base.hash(s::Symbol, h::UInt) = hash(s.char, hash(:Symbol, h))
-Base.show(io::IO, s::Symbol) = print(io, s.char)
+Base.:(==)(a::LSymbol, b::LSymbol) = a.char == b.char
+Base.hash(s::LSymbol, h::UInt) = hash(s.char, hash(:LSymbol, h))
+Base.show(io::IO, s::LSymbol) = print(io, s.char)
 
 """
-    name(s::Symbol)
+    name(s::LSymbol)
 
 Return the character identifier of a plain symbol.
 """
-name(s::Symbol) = s.char
+name(s::LSymbol) = s.char
 
 # ──────────────────────────────────────────────────────────────────
 # Parametric symbol  (e.g. F(1.0), A(10, 3.5))
@@ -78,6 +78,7 @@ end
 
 Base.:(==)(a::ParametricSymbol{N}, b::ParametricSymbol{N}) where {N} =
     a.char == b.char && a.params == b.params
+# Different N type parameters → different arity → never equal
 Base.:(==)(::ParametricSymbol, ::ParametricSymbol) = false
 
 Base.hash(s::ParametricSymbol, h::UInt) =
@@ -117,7 +118,7 @@ Check whether two symbols match for rule application.
 Plain symbols match by character. Parametric symbols match by character and arity
 (parameter values are ignored for matching — they are checked by conditions).
 """
-matches(a::Symbol, b::Symbol) = a.char == b.char
+matches(a::LSymbol, b::LSymbol) = a.char == b.char
 matches(a::ParametricSymbol{N}, b::ParametricSymbol{N}) where {N} = a.char == b.char
 matches(::AbstractSymbol, ::AbstractSymbol) = false
 
@@ -131,20 +132,24 @@ matches(::AbstractSymbol, ::AbstractSymbol) = false
 An ordered sequence of L-system symbols representing one generation
 of a derivation. Supports indexing, iteration, and length.
 
+LStrings are construction-only: build a new LString for each derivation
+step rather than mutating an existing one. Use `copy` when you need an
+independent instance sharing no backing storage.
+
 # Examples
 ```julia
-ls = LString([Symbol('F'), Symbol('+'), Symbol('F')])
+ls = LString([LSymbol('F'), LSymbol('+'), LSymbol('F')])
 length(ls)  # 3
-ls[2]       # Symbol('+')
+ls[2]       # LSymbol('+')
 ```
 """
 struct LString
     symbols::Vector{AbstractSymbol}
 end
 
-# Construct from a plain string (each char → Symbol)
+# Construct from a plain string (each char → LSymbol)
 function LString(s::AbstractString)
-    LString([Symbol(c) for c in s])
+    LString([LSymbol(c) for c in s])
 end
 
 Base.length(ls::LString) = length(ls.symbols)
@@ -153,11 +158,12 @@ Base.getindex(ls::LString, r::AbstractRange) = LString(ls.symbols[r])
 Base.iterate(ls::LString) = iterate(ls.symbols)
 Base.iterate(ls::LString, state) = iterate(ls.symbols, state)
 Base.eltype(::Type{LString}) = AbstractSymbol
+Base.IteratorSize(::Type{LString}) = Base.HasLength()
+Base.IteratorEltype(::Type{LString}) = Base.HasEltype()
 Base.firstindex(ls::LString) = 1
 Base.lastindex(ls::LString) = length(ls.symbols)
 Base.isempty(ls::LString) = isempty(ls.symbols)
-Base.push!(ls::LString, s::AbstractSymbol) = (push!(ls.symbols, s); ls)
-Base.append!(ls::LString, other::LString) = (append!(ls.symbols, other.symbols); ls)
+Base.copy(ls::LString) = LString(copy(ls.symbols))
 
 function Base.show(io::IO, ls::LString)
     for s in ls.symbols
@@ -167,7 +173,7 @@ end
 
 function Base.:(==)(a::LString, b::LString)
     length(a) == length(b) || return false
-    all(a.symbols .== b.symbols)
+    all(x == y for (x, y) in zip(a.symbols, b.symbols))
 end
 
 Base.hash(ls::LString, h::UInt) = hash(ls.symbols, hash(:LString, h))
