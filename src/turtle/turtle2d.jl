@@ -24,6 +24,13 @@ struct LineSegment2D
 end
 
 Base.:(==)(a::LineSegment2D, b::LineSegment2D) = a.start == b.start && a.stop == b.stop
+Base.hash(s::LineSegment2D, h::UInt) = hash(s.stop, hash(s.start, hash(:LineSegment2D, h)))
+Base.isapprox(a::LineSegment2D, b::LineSegment2D; kwargs...) =
+    isapprox(a.start, b.start; kwargs...) && isapprox(a.stop, b.stop; kwargs...)
+
+function Base.show(io::IO, s::LineSegment2D)
+    print(io, "(", s.start[1], ",", s.start[2], ")→(", s.stop[1], ",", s.stop[2], ")")
+end
 
 """
     TurtleState2D
@@ -72,23 +79,32 @@ function interpret2d(ls::LString; angle::Real=25.0, step::Real=1.0)
     angle_rad = deg2rad(Float64(angle))
     stack = TurtleState2D[]
     segments = LineSegment2D[]
+    # Pre-count F symbols to avoid repeated reallocation
+    sizehint!(segments, count(s -> name(s) == 'F', ls))
+    # Cache direction vector; recompute only when heading changes
+    dir = SVector(cos(turtle.heading), sin(turtle.heading))
+    heading_dirty = false
 
     for sym in ls
         c = name(sym)
         if c == 'F'
+            heading_dirty && (dir = SVector(cos(turtle.heading), sin(turtle.heading)); heading_dirty = false)
             d = _get_step(sym, turtle.step)
-            new_pos = turtle.pos + SVector(d * cos(turtle.heading), d * sin(turtle.heading))
+            new_pos = turtle.pos + d * dir
             push!(segments, LineSegment2D(turtle.pos, new_pos))
             turtle.pos = new_pos
         elseif c == 'f'
+            heading_dirty && (dir = SVector(cos(turtle.heading), sin(turtle.heading)); heading_dirty = false)
             d = _get_step(sym, turtle.step)
-            turtle.pos = turtle.pos + SVector(d * cos(turtle.heading), d * sin(turtle.heading))
+            turtle.pos = turtle.pos + d * dir
         elseif c == '+'
             a = _get_angle(sym, angle_rad)
-            turtle.heading += a
+            turtle.heading = mod2pi(turtle.heading + a)
+            heading_dirty = true
         elseif c == '-'
             a = _get_angle(sym, angle_rad)
-            turtle.heading -= a
+            turtle.heading = mod2pi(turtle.heading - a)
+            heading_dirty = true
         elseif c == '['
             push!(stack, copy(turtle))
         elseif c == ']'
@@ -97,6 +113,7 @@ function interpret2d(ls::LString; angle::Real=25.0, step::Real=1.0)
             turtle.pos = restored.pos
             turtle.heading = restored.heading
             turtle.step = restored.step
+            heading_dirty = true
         end
         # All other symbols: no-op
     end

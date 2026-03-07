@@ -10,6 +10,27 @@ using StaticArrays
             @test seg.stop == p2
             @test seg == LineSegment2D(p1, p2)
         end
+
+        @testset "hash — usable in Set/Dict" begin
+            s1 = LineSegment2D(SVector(0.0, 0.0), SVector(1.0, 0.0))
+            s2 = LineSegment2D(SVector(0.0, 0.0), SVector(1.0, 0.0))
+            s3 = LineSegment2D(SVector(0.0, 0.0), SVector(0.0, 1.0))
+            @test hash(s1) == hash(s2)
+            @test length(Set([s1, s2, s3])) == 2
+        end
+
+        @testset "isapprox" begin
+            s1 = LineSegment2D(SVector(0.0, 0.0), SVector(1.0, 0.0))
+            s2 = LineSegment2D(SVector(0.0, 0.0), SVector(1.0 + 1e-15, 0.0))
+            s3 = LineSegment2D(SVector(0.0, 0.0), SVector(2.0, 0.0))
+            @test s1 ≈ s2
+            @test !(s1 ≈ s3)
+        end
+
+        @testset "show" begin
+            seg = LineSegment2D(SVector(0.0, 1.0), SVector(2.0, 3.0))
+            @test contains(sprint(show, seg), "→")
+        end
     end
 
     @testset "interpret2d basics" begin
@@ -137,12 +158,29 @@ using StaticArrays
             @test segs[1].start ≈ SVector(0.0, 5.0)
             @test segs[1].stop ≈ SVector(0.0, 6.0)
         end
+
+        @testset "Extra params ignored — only first param used" begin
+            # F(3.0, 99.0) should use 3.0 as step, ignore 99.0
+            ls = LString([ParametricSymbol('F', (3.0, 99.0))])
+            segs = interpret2d(ls; angle=90.0, step=1.0)
+            @test length(segs) == 1
+            @test segs[1].stop ≈ SVector(0.0, 3.0)
+        end
     end
 
     @testset "Unknown symbols are no-ops" begin
         segs = interpret2d(LString("XFYF"); angle=90.0, step=1.0)
         @test length(segs) == 2
         @test segs[1].start ≈ SVector(0.0, 0.0)
+    end
+
+    @testset "Heading normalization — many turns don't drift" begin
+        # 360° of left turns then F should end up same as just F
+        segs_direct = interpret2d(LString("F"); angle=90.0, step=1.0)
+        segs_rotated = interpret2d(LString("++++F"); angle=90.0, step=1.0)
+        @test length(segs_rotated) == 1
+        @test segs_rotated[1].start ≈ SVector(0.0, 0.0)
+        @test segs_rotated[1].stop ≈ segs_direct[1].stop atol=1e-12
     end
 
     @testset "Zero step and zero angle" begin
