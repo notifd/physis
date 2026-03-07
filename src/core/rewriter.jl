@@ -55,6 +55,10 @@ function apply_rule(rule::StochasticRule, sym::LSymbol, rng::AbstractRNG)
     return rule.alternatives[end]
 end
 
+# 3-arg forwarding methods: pass RNG through for uniform dispatch in _apply_first_match
+apply_rule(rule::Rule, sym::LSymbol, ::AbstractRNG) = apply_rule(rule, sym)
+apply_rule(rule::ParametricRule{N}, sym::ParametricSymbol{N}, ::AbstractRNG) where {N} = apply_rule(rule, sym)
+
 # ──────────────────────────────────────────────────────────────────
 # Internal: matching helpers
 # ──────────────────────────────────────────────────────────────────
@@ -83,13 +87,7 @@ function _apply_first_match(rules::Vector{AbstractRule}, sym::AbstractSymbol,
                             rng::AbstractRNG)
     for rule in rules
         if _rule_matches(rule, sym)
-            if rule isa StochasticRule
-                return apply_rule(rule, sym, rng)
-            elseif rule isa Rule
-                return apply_rule(rule, sym)
-            elseif rule isa ParametricRule
-                return apply_rule(rule, sym)
-            end
+            return apply_rule(rule, sym, rng)
         end
     end
     # Identity: no matching rule → symbol passes through

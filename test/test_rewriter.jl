@@ -174,15 +174,12 @@ using StableRNGs
             result2 = derive(axiom, rs, 3; rng=StableRNG(123))
             @test result1 == result2
 
-            # Different seeds → (very likely) different result
-            result3 = derive(axiom, rs, 5; rng=StableRNG(999))
-            result4 = derive(axiom, rs, 5; rng=StableRNG(1))
-            # With 5 generations of binary choices, P(identical) = (0.5)^5 = 3.1%
-            # We test that at least one pair differs over several generations
-            results_differ = any(1:5) do n
-                derive(axiom, rs, n; rng=StableRNG(999)) != derive(axiom, rs, n; rng=StableRNG(1))
-            end
-            @test results_differ
+            # Different seeds → deterministically different results
+            result_a = derive(axiom, rs, 1; rng=StableRNG(42))
+            result_b = derive(axiom, rs, 1; rng=StableRNG(3))
+            @test result_a == LString("GA")
+            @test result_b == LString("FA")
+            @test result_a != result_b
         end
     end
 end

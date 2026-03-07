@@ -53,9 +53,10 @@ end
     ParametricRule(lhs, production)
 
 A parametric production rule with an optional guard condition.
-The condition function receives the symbol's parameters as a tuple
-and returns a Bool. The production function receives the same
-parameters and returns a `Vector{AbstractSymbol}`.
+The condition function receives the symbol's parameters as individual
+arguments (splatted from the parameter tuple) and returns a Bool.
+The production function receives the same individual arguments and
+returns a `Vector{AbstractSymbol}`.
 
 When constructed without a condition, the rule always matches.
 
