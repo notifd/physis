@@ -2,10 +2,11 @@
 Tests for the L-system HTML gallery generation.
 
 Tests that:
-1. Gallery has 10 classic ABOP L-system entries
+1. Gallery has 100 L-system entries across 6 categories
 2. substitute_draw_symbols correctly replaces non-F drawing symbols
 3. Each L-system produces non-empty line segments when derived + interpreted
 4. generate_gallery creates SVG files and HTML index in output directory
+5. HTML contains category section headers and navigation
 """
 
 using CairoMakie  # ensure CairoMakie extension is loaded for save_render
@@ -14,11 +15,20 @@ include(joinpath(@__DIR__, "..", "scripts", "generate_gallery.jl"))
 
 @testset "Gallery L-Systems" begin
 
-    @testset "Gallery has 10 entries" begin
-        @test length(GALLERY) == 10
+    @testset "Gallery has 100 entries" begin
+        @test length(GALLERY) == 100
         @test all(e -> e.name isa String && !isempty(e.name), GALLERY)
         @test all(e -> e.generations > 0, GALLERY)
         @test all(e -> e.angle > 0, GALLERY)
+    end
+
+    @testset "All entries have non-empty category" begin
+        @test all(e -> e.category isa String && !isempty(e.category), GALLERY)
+    end
+
+    @testset "All entry names are unique" begin
+        names = [e.name for e in GALLERY]
+        @test length(names) == length(unique(names))
     end
 
     @testset "substitute_draw_symbols" begin
@@ -85,6 +95,15 @@ include(joinpath(@__DIR__, "..", "scripts", "generate_gallery.jl"))
                 @test occursin(entry.name, html)
                 @test occursin(entry.rule_notation, html)
             end
+
+            # Category section headers in HTML
+            categories = unique([e.category for e in GALLERY])
+            for cat in categories
+                @test occursin(cat, html)
+            end
+
+            # Navigation bar with category links
+            @test occursin("nav", html)
         end
     end
 end
