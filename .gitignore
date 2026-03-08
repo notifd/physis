@@ -13,6 +13,7 @@ deps/build.log
 .idea/
 
 # Render output (generated, not committed)
+gallery/
 docs/gallery/
 docs/renders/
 *.glb
