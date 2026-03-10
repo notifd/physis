@@ -106,4 +106,109 @@ include(joinpath(@__DIR__, "..", "scripts", "generate_gallery.jl"))
             @test occursin("nav", html)
         end
     end
+
+    @testset "3D Gallery Generation" begin
+
+        @testset "is_3d_species identifies plants vs fractals" begin
+            # Find a plant entry and a fractal entry
+            plant_entry = first(e for e in GALLERY if e.category == "Plants & Trees")
+            fractal_entry = first(e for e in GALLERY if e.category == "Fractal Curves")
+            dragon_entry = first(e for e in GALLERY if e.category == "Dragon Family")
+            sierpinski_entry = first(e for e in GALLERY if e.category == "Sierpinski Family")
+            space_entry = first(e for e in GALLERY if e.category == "Space-Filling Curves")
+
+            @test is_3d_species(plant_entry) == true
+            @test is_3d_species(fractal_entry) == false
+            @test is_3d_species(dragon_entry) == false
+            @test is_3d_species(sierpinski_entry) == false
+            @test is_3d_species(space_entry) == false
+        end
+
+        @testset "render_entry_3d produces valid GLB files" begin
+            species_lookup = Dict(def.name => def for def in list_species())
+            # Pick two small plant species for speed
+            plant_entries = [e for e in GALLERY if e.category == "Plants & Trees"]
+            test_entries = plant_entries[1:2]
+
+            mktempdir() do tmpdir
+                for entry in test_entries
+                    def = species_lookup[entry.name]
+                    glb_filename = render_entry_3d(entry, def, tmpdir)
+                    @test glb_filename !== nothing
+                    @test endswith(glb_filename, ".glb")
+                    glb_path = joinpath(tmpdir, glb_filename)
+                    @test isfile(glb_path)
+                    @test filesize(glb_path) > 0
+                end
+            end
+        end
+
+        @testset "render_entry_3d returns nothing on failure" begin
+            # Create a dummy entry with an empty axiom that will fail
+            bad_entry = (
+                name = "Bad Plant",
+                category = "Plants & Trees",
+                axiom = LString("+"),
+                rules = RuleSet(Rule[]),
+                generations = 1,
+                angle = 25.0,
+                draw_chars = Set(['F']),
+                linecolor = "#50fa7b",
+                linewidth = 1.0,
+                reference = "",
+                rule_notation = "",
+            )
+            bad_def = LSystemDef(
+                name = "Bad Plant",
+                category = :plants_trees,
+                axiom = LString("+"),
+                rules = RuleSet(Rule[]),
+                generations = 1,
+                angle = 25.0,
+            )
+
+            mktempdir() do tmpdir
+                result = render_entry_3d(bad_entry, bad_def, tmpdir)
+                @test result === nothing
+            end
+        end
+
+        @testset "Full gallery integration with 3D" begin
+            mktempdir() do tmpdir
+                generate_gallery(tmpdir)
+
+                html = read(joinpath(tmpdir, "index.html"), String)
+
+                # model-viewer CDN script present
+                @test occursin("model-viewer", html)
+                @test occursin("ajax.googleapis.com/ajax/libs/model-viewer", html)
+
+                # toggleView JS present
+                @test occursin("toggleView", html)
+
+                # Plant cards have model-viewer elements
+                plant_entries = [e for e in GALLERY if e.category == "Plants & Trees"]
+                for entry in plant_entries
+                    glb_filename = entry_slug(entry.name) * ".glb"
+                    glb_path = joinpath(tmpdir, glb_filename)
+                    @test isfile(glb_path)
+                    @test occursin(glb_filename, html)
+                end
+
+                # Fractal cards do NOT have model-viewer
+                fractal_entries = [e for e in GALLERY if e.category != "Plants & Trees"]
+                for entry in fractal_entries
+                    glb_filename = entry_slug(entry.name) * ".glb"
+                    @test !isfile(joinpath(tmpdir, glb_filename))
+                end
+
+                # model-viewer tag is in HTML
+                @test occursin("<model-viewer", html)
+
+                # Tab CSS is present
+                @test occursin("media-tabs", html)
+                @test occursin("media-view", html)
+            end
+        end
+    end
 end

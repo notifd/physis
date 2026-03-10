@@ -3,6 +3,7 @@
 
 Renders all registered species from the Physis catalog as SVGs,
 and generates a self-contained HTML gallery page with category navigation.
+Plant & tree species also get interactive 3D GLB viewers via model-viewer.
 
 Usage:
     julia --project=. scripts/generate_gallery.jl [outdir]
@@ -14,6 +15,8 @@ Reference: ABOP §1.3, §1.5, Fig 1.24
 
 using Physis
 using CairoMakie
+using Random
+using StableRNGs
 
 # ── Gallery entry type ───────────────────────────────────────────
 
@@ -41,6 +44,96 @@ Convert an entry name to a URL/filename-safe slug.
 function entry_slug(entry_name::String)
     s = replace(lowercase(entry_name), r"[^a-z0-9]+" => "-")
     strip(s, '-')
+end
+
+# ── 3D rendering helpers ─────────────────────────────────────────
+
+"""
+    is_3d_species(entry) -> Bool
+
+Return true if the gallery entry is a plant/tree species that should get a 3D render.
+"""
+is_3d_species(entry) = entry.category == "Plants & Trees"
+
+const DEFAULT_GLB_COLOR = (0.18, 0.55, 0.22)
+const DEFAULT_GLB_BASE_RADIUS = 0.05
+const DEFAULT_GLB_TAPER = 0.7
+
+"""
+    render_entry_3d(entry, def::LSystemDef, outdir::String) -> Union{String, Nothing}
+
+Render a 3D GLB file for the given gallery entry using the species definition.
+Returns the GLB filename on success, `nothing` on failure (logged as warning).
+"""
+function render_entry_3d(entry, def::LSystemDef, outdir::String)
+    filename = entry_slug(entry.name) * ".glb"
+    filepath = joinpath(outdir, filename)
+
+    color = get(def.metadata, :glb_color, DEFAULT_GLB_COLOR)
+    base_radius = get(def.metadata, :glb_base_radius, DEFAULT_GLB_BASE_RADIUS)
+    taper = get(def.metadata, :glb_taper, DEFAULT_GLB_TAPER)
+    gens = get(def.metadata, :glb_generations, def.generations)
+
+    try
+        render_lsystem_3d(
+            def.axiom, def.rules, gens;
+            angle=def.angle,
+            base_radius=base_radius,
+            taper=taper,
+            output_path=filepath,
+            color=color,
+            rng=StableRNG(42),
+        )
+        return filename
+    catch e
+        @warn "Failed to render 3D for $(entry.name)" exception=(e, catch_backtrace())
+        return nothing
+    end
+end
+
+# ── Card builders ────────────────────────────────────────────────
+
+"""
+    build_2d_card(entry, svg_filename::String) -> String
+
+Build HTML for a 2D-only gallery card (fractals, etc).
+"""
+function build_2d_card(entry, svg_filename::String)
+    """
+            <div class="card">
+                <img src="$(svg_filename)" alt="$(entry.name)" loading="lazy">
+                <div class="info">
+                    <h3>$(entry.name)</h3>
+                    <code>$(entry.rule_notation)</code>
+                    <p class="ref">$(entry.reference)</p>
+                </div>
+            </div>"""
+end
+
+"""
+    build_3d_card(entry, svg_filename::String, glb_filename::String) -> String
+
+Build HTML for a 3D+2D gallery card with tab toggle. 3D view is shown by default.
+"""
+function build_3d_card(entry, svg_filename::String, glb_filename::String)
+    """
+            <div class="card card-3d">
+                <div class="media-tabs">
+                    <button class="tab active" onclick="toggleView(this, '3d')">3D</button>
+                    <button class="tab" onclick="toggleView(this, '2d')">2D</button>
+                </div>
+                <div class="media-view view-3d active">
+                    <model-viewer src="$(glb_filename)" alt="$(entry.name) 3D model" auto-rotate camera-controls shadow-intensity="1" style="width:100%;height:300px;background:#111111;"></model-viewer>
+                </div>
+                <div class="media-view view-2d">
+                    <img src="$(svg_filename)" alt="$(entry.name)" loading="lazy">
+                </div>
+                <div class="info">
+                    <h3>$(entry.name)</h3>
+                    <code>$(entry.rule_notation)</code>
+                    <p class="ref">$(entry.reference)</p>
+                </div>
+            </div>"""
 end
 
 # ── Category display names ───────────────────────────────────────
@@ -132,6 +225,9 @@ with category sections and a sticky navigation bar.
 function generate_gallery(outdir::String="gallery")
     mkpath(outdir)
 
+    # Build species lookup for 3D rendering
+    species_lookup = Dict(def.name => def for def in list_species())
+
     # Group entries by category, preserving order of first appearance
     categories = String[]
     grouped = Dict{String, Vector{GalleryEntry}}()
@@ -143,7 +239,7 @@ function generate_gallery(outdir::String="gallery")
         push!(grouped[entry.category], entry)
     end
 
-    # Render all SVGs and build card HTML grouped by category
+    # Render all SVGs (and GLBs for plants) and build card HTML
     sections_html = String[]
 
     for cat in categories
@@ -152,19 +248,20 @@ function generate_gallery(outdir::String="gallery")
 
         for entry in entries
             println("Rendering $(entry.name)...")
-            filename = render_entry(entry, outdir)
-            cat_id = entry_slug(cat)
+            svg_filename = render_entry(entry, outdir)
 
-            card = """
-            <div class="card">
-                <img src="$(filename)" alt="$(entry.name)" loading="lazy">
-                <div class="info">
-                    <h3>$(entry.name)</h3>
-                    <code>$(entry.rule_notation)</code>
-                    <p class="ref">$(entry.reference)</p>
-                </div>
-            </div>"""
-            push!(cards, card)
+            if is_3d_species(entry) && haskey(species_lookup, entry.name)
+                def = species_lookup[entry.name]
+                println("  Rendering 3D for $(entry.name)...")
+                glb_filename = render_entry_3d(entry, def, outdir)
+                if glb_filename !== nothing
+                    push!(cards, build_3d_card(entry, svg_filename, glb_filename))
+                else
+                    push!(cards, build_2d_card(entry, svg_filename))
+                end
+            else
+                push!(cards, build_2d_card(entry, svg_filename))
+            end
         end
 
         cat_id = entry_slug(cat)
@@ -191,6 +288,7 @@ $(join(cards, "\n"))
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Physis — L-System Gallery</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -284,6 +382,31 @@ $(join(cards, "\n"))
             font-size: 0.75rem;
             color: #6272a4;
         }
+        .card-3d { position: relative; }
+        .media-tabs {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 10;
+            display: flex;
+            gap: 4px;
+        }
+        .tab {
+            padding: 4px 10px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #1e1e2e;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        .tab.active {
+            background: #bd93f9;
+            color: #0a0a0f;
+            border-color: #bd93f9;
+        }
+        .media-view { display: none; }
+        .media-view.active { display: block; }
     </style>
 </head>
 <body>
@@ -291,8 +414,17 @@ $(join(cards, "\n"))
 $(join(nav_links, "\n"))
     </nav>
     <h1>Physis — L-System Gallery</h1>
-    <p class="subtitle">100 L-systems from <em>The Algorithmic Beauty of Plants</em> and classic fractals</p>
+    <p class="subtitle">100 L-systems from <em>The Algorithmic Beauty of Plants</em> and classic fractals — plants with interactive 3D</p>
 $(join(sections_html, "\n"))
+    <script>
+    function toggleView(btn, view) {
+        var card = btn.closest('.card-3d');
+        card.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        card.querySelectorAll('.media-view').forEach(function(v) { v.classList.remove('active'); });
+        btn.classList.add('active');
+        card.querySelector('.view-' + view).classList.add('active');
+    }
+    </script>
 </body>
 </html>"""
 
