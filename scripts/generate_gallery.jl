@@ -119,12 +119,20 @@ function render_entry_photorealistic(entry, def::LSystemDef, outdir::String;
     samples = get(def.metadata, :blender_samples, DEFAULT_PHOTO_SAMPLES)
     camera_distance = get(def.metadata, :blender_camera_distance, 2.5)
 
+    # Auto-classify material type from glb_color green channel
+    glb_color = get(def.metadata, :glb_color, DEFAULT_GLB_COLOR)
+    mat_type = get(def.metadata, :blender_material_type, nothing)
+    if mat_type === nothing
+        mat_type = glb_color[2] > 0.35 ? "foliage" : "bark"
+    end
+
     result = render_photorealistic(
         glb_path, photo_path;
         resolution=DEFAULT_PHOTO_RESOLUTION,
         samples=samples,
         camera_distance_factor=camera_distance,
         bark_color=bark_color,
+        material_type=mat_type,
     )
 
     return result !== nothing ? photo_filename : nothing
