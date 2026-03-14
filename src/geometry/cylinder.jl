@@ -31,7 +31,8 @@ function cylinder_mesh(
     stop::SVector{3,Float64},
     radius_start::Float64,
     radius_end::Float64;
-    segments::Int=8
+    segments::Int=8,
+    color::SVector{4,Float64}=SVector(1.0, 1.0, 1.0, 1.0)
 )
     axis = stop - start
     len = norm(axis)
@@ -43,6 +44,7 @@ function cylinder_mesh(
             SVector{3,Float64}[],
             NTuple{3,Int}[],
             SVector{2,Float64}[],
+            SVector{4,Float64}[],
         )
     end
 
@@ -59,6 +61,7 @@ function cylinder_mesh(
     vertices = Vector{SVector{3,Float64}}(undef, n_verts)
     normals = Vector{SVector{3,Float64}}(undef, n_verts)
     uvs = Vector{SVector{2,Float64}}(undef, n_verts)
+    colors = fill(color, n_verts)
     faces = Vector{NTuple{3,Int}}(undef, 2 * segments)
 
     # Slope angle for normal calculation (truncated cone)
@@ -100,5 +103,5 @@ function cylinder_mesh(
         faces[2i+2] = (i1, i3, i2)
     end
 
-    TriangleMesh(vertices, normals, faces, uvs)
+    TriangleMesh(vertices, normals, faces, uvs, colors)
 end

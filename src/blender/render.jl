@@ -80,6 +80,7 @@ function generate_blender_script(;
     camera_distance_factor::Real=2.5,
     bark_color::Tuple{Real, Real, Real}=(0.35, 0.25, 0.15),
     ground_plane::Bool=true,
+    material_type::AbstractString="bark",
 )::String
     template = read(PHOTOREALISTIC_TEMPLATE, String)
 
@@ -94,6 +95,7 @@ function generate_blender_script(;
     script = replace(script, "{{BARK_COLOR_G}}" => string(Float64(bark_color[2])))
     script = replace(script, "{{BARK_COLOR_B}}" => string(Float64(bark_color[3])))
     script = replace(script, "{{GROUND_PLANE}}" => ground_plane ? "True" : "False")
+    script = replace(script, "{{MATERIAL_TYPE}}" => material_type)
 
     return script
 end
@@ -119,6 +121,7 @@ function render_photorealistic(
     camera_distance_factor::Real=2.5,
     bark_color::Tuple{Real, Real, Real}=(0.35, 0.25, 0.15),
     ground_plane::Bool=true,
+    material_type::AbstractString="bark",
     blender_path::Union{String, Nothing}=nothing,
     timeout::Int=300,
 )::Union{String, Nothing}
@@ -144,6 +147,7 @@ function render_photorealistic(
         camera_distance_factor=camera_distance_factor,
         bark_color=bark_color,
         ground_plane=ground_plane,
+        material_type=material_type,
     )
 
     # Write script to temp file
@@ -249,12 +253,19 @@ function render_species_photorealistic(
     render_samples = get(def.metadata, :blender_samples, samples)
     camera_distance = get(def.metadata, :blender_camera_distance, 2.5)
 
+    # Auto-classify material type from glb_color green channel
+    mat_type = get(def.metadata, :blender_material_type, nothing)
+    if mat_type === nothing
+        mat_type = color[2] > 0.35 ? "foliage" : "bark"
+    end
+
     return render_photorealistic(
         glb_path, png_path;
         resolution=resolution,
         samples=render_samples,
         camera_distance_factor=camera_distance,
         bark_color=bark_color,
+        material_type=mat_type,
         blender_path=blender_path,
     )
 end

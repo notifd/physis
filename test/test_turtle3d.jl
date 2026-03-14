@@ -31,8 +31,13 @@ using LinearAlgebra
         end
 
         @testset "show" begin
-            seg = LineSegment3D(SVector(0.0, 1.0, 2.0), SVector(3.0, 4.0, 5.0), 1.0)
+            seg = LineSegment3D(SVector(0.0, 1.0, 2.0), SVector(3.0, 4.0, 5.0), 1.0, 0)
             @test contains(sprint(show, seg), "→")
+        end
+
+        @testset "depth field" begin
+            seg = LineSegment3D(SVector(0.0, 0.0, 0.0), SVector(1.0, 0.0, 0.0), 1.0, 3)
+            @test seg.depth == 3
         end
     end
 
@@ -308,6 +313,37 @@ using LinearAlgebra
             @test len1 ≈ 1.0
             @test len2 ≈ 0.5
             @test len3 ≈ 1.0
+        end
+
+        @testset "depth tracking in branching" begin
+            @testset "trunk segments have depth 0" begin
+                segs = interpret3d(LString("FF"); angle=90.0, step=1.0)
+                @test segs[1].depth == 0
+                @test segs[2].depth == 0
+            end
+
+            @testset "segments inside [ have depth >= 1" begin
+                segs = interpret3d(LString("F[+F]F"); angle=90.0, step=1.0)
+                @test segs[1].depth == 0  # before [
+                @test segs[2].depth == 1  # inside [
+                @test segs[3].depth == 0  # after ]
+            end
+
+            @testset "nested branches increment depth" begin
+                segs = interpret3d(LString("F[F[F]]"); angle=90.0, step=1.0)
+                @test segs[1].depth == 0
+                @test segs[2].depth == 1
+                @test segs[3].depth == 2
+            end
+
+            @testset "depth restores correctly after pop" begin
+                segs = interpret3d(LString("F[F[F]F]F"); angle=90.0, step=1.0)
+                @test segs[1].depth == 0  # trunk
+                @test segs[2].depth == 1  # first [
+                @test segs[3].depth == 2  # nested [
+                @test segs[4].depth == 1  # back to first [ level
+                @test segs[5].depth == 0  # back to trunk
+            end
         end
 
         @testset "Houdini ternary tree produces tapering branches" begin

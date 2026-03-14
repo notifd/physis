@@ -57,8 +57,44 @@ Tier 1 tests run without Blender. Tier 2 tests require Blender installed.
         # Camera distance factor injected
         @test occursin("2.5", script)
 
-        # Ground plane enabled
-        @test occursin("shadow_catcher", script) || occursin("is_shadow_catcher", script)
+        # Ground plane enabled with earth material
+        @test occursin("GroundPlane", script) || occursin("GroundMat", script)
+    end
+
+    @testset "generate_blender_script material_type=foliage" begin
+        script = generate_blender_script(
+            glb_path="/tmp/test.glb",
+            output_path="/tmp/test.png",
+            material_type="foliage",
+        )
+        @test !occursin("{{", script)
+        @test occursin("\"foliage\"", script)
+        @test occursin("MATERIAL_PARAMS", script)
+        @test occursin("ShaderNodeVertexColor", script)
+    end
+
+    @testset "generate_blender_script default material_type is bark" begin
+        script = generate_blender_script(
+            glb_path="/tmp/test.glb",
+            output_path="/tmp/test.png",
+        )
+        @test !occursin("{{", script)
+        @test occursin("\"bark\"", script)
+        @test occursin("MATERIAL_PARAMS", script)
+        @test occursin("ShaderNodeVertexColor", script)
+        # Contains shader nodes for procedural texturing
+        @test occursin("ShaderNodeTexNoise", script)
+        @test occursin("ShaderNodeBump", script)
+        @test occursin("ShaderNodeTexVoronoi", script)
+        # Contains three-point lighting
+        @test occursin("KeySun", script)
+        @test occursin("FillLight", script)
+        @test occursin("RimLight", script)
+        # Contains DOF
+        @test occursin("use_dof", script)
+        @test occursin("aperture_fstop", script)
+        # Contains volumetric atmosphere
+        @test occursin("ShaderNodeVolumeScatter", script)
     end
 
     @testset "generate_blender_script without ground plane" begin
@@ -67,7 +103,7 @@ Tier 1 tests run without Blender. Tier 2 tests require Blender installed.
             output_path="/tmp/test.png",
             ground_plane=false,
         )
-        @test !occursin("shadow_catcher", script) || occursin("ground_plane = False", script)
+        @test occursin("ground_plane = False", script)
     end
 
     @testset "render_photorealistic returns nothing for invalid blender" begin
