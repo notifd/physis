@@ -3,7 +3,8 @@
 
 Renders all registered species from the Physis catalog as SVGs,
 and generates a self-contained HTML gallery page with category navigation.
-Plant & tree species also get interactive 3D GLB viewers via model-viewer.
+Plant & tree species also get interactive 3D GLB viewers via model-viewer
+and photorealistic Blender Cycles renders (when Blender is available).
 
 Usage:
     julia --project=. scripts/generate_gallery.jl [outdir]
@@ -94,6 +95,41 @@ function render_entry_3d(entry, def::LSystemDef, outdir::String)
     end
 end
 
+# ── Photorealistic rendering helpers ─────────────────────────────
+
+const DEFAULT_PHOTO_RESOLUTION = (1920, 1080)
+const DEFAULT_PHOTO_SAMPLES = 128
+
+"""
+    render_entry_photorealistic(entry, def::LSystemDef, outdir::String;
+        glb_filename::String) -> Union{String, Nothing}
+
+Render a photorealistic PNG via Blender Cycles for the given gallery entry.
+Requires Blender installed and the GLB file already generated.
+Returns the PNG filename on success, `nothing` on failure.
+"""
+function render_entry_photorealistic(entry, def::LSystemDef, outdir::String;
+    glb_filename::String)
+    glb_path = joinpath(outdir, glb_filename)
+    photo_filename = entry_slug(entry.name) * "_photo.png"
+    photo_path = joinpath(outdir, photo_filename)
+
+    bark_color = get(def.metadata, :blender_bark_color,
+                     get(def.metadata, :glb_color, DEFAULT_GLB_COLOR))
+    samples = get(def.metadata, :blender_samples, DEFAULT_PHOTO_SAMPLES)
+    camera_distance = get(def.metadata, :blender_camera_distance, 2.5)
+
+    result = render_photorealistic(
+        glb_path, photo_path;
+        resolution=DEFAULT_PHOTO_RESOLUTION,
+        samples=samples,
+        camera_distance_factor=camera_distance,
+        bark_color=bark_color,
+    )
+
+    return result !== nothing ? photo_filename : nothing
+end
+
 # ── Card builders ────────────────────────────────────────────────
 
 """
@@ -126,6 +162,36 @@ function build_3d_card(entry, svg_filename::String, glb_filename::String)
                     <button class="tab" onclick="toggleView(this, '2d')">2D</button>
                 </div>
                 <div class="media-view view-3d active">
+                    <model-viewer src="$(glb_filename)" alt="$(entry.name) 3D model" auto-rotate camera-controls shadow-intensity="1" style="width:100%;height:300px;background:#111111;"></model-viewer>
+                </div>
+                <div class="media-view view-2d">
+                    <img src="$(svg_filename)" alt="$(entry.name)" loading="lazy">
+                </div>
+                <div class="info">
+                    <h3>$(entry.name)</h3>
+                    <code>$(entry.rule_notation)</code>
+                    <p class="ref">$(entry.reference)</p>
+                </div>
+            </div>"""
+end
+
+"""
+    build_3d_photo_card(entry, svg_filename::String, glb_filename::String, photo_filename::String) -> String
+
+Build HTML for a Photo+3D+2D gallery card with 3 tab toggle. Photo view is shown by default.
+"""
+function build_3d_photo_card(entry, svg_filename::String, glb_filename::String, photo_filename::String)
+    """
+            <div class="card card-3d">
+                <div class="media-tabs">
+                    <button class="tab active" onclick="toggleView(this, 'photo')">Photo</button>
+                    <button class="tab" onclick="toggleView(this, '3d')">3D</button>
+                    <button class="tab" onclick="toggleView(this, '2d')">2D</button>
+                </div>
+                <div class="media-view view-photo active">
+                    <img src="$(photo_filename)" alt="$(entry.name) photorealistic render" loading="lazy">
+                </div>
+                <div class="media-view view-3d">
                     <model-viewer src="$(glb_filename)" alt="$(entry.name) 3D model" auto-rotate camera-controls shadow-intensity="1" style="width:100%;height:300px;background:#111111;"></model-viewer>
                 </div>
                 <div class="media-view view-2d">
@@ -259,7 +325,15 @@ function generate_gallery(outdir::String="gallery")
                 println("  Rendering 3D for $(entry.name)...")
                 glb_filename = render_entry_3d(entry, def, outdir)
                 if glb_filename !== nothing
-                    push!(cards, build_3d_card(entry, svg_filename, glb_filename))
+                    # Attempt photorealistic render
+                    println("  Rendering photorealistic for $(entry.name)...")
+                    photo_filename = render_entry_photorealistic(entry, def, outdir;
+                        glb_filename=glb_filename)
+                    if photo_filename !== nothing
+                        push!(cards, build_3d_photo_card(entry, svg_filename, glb_filename, photo_filename))
+                    else
+                        push!(cards, build_3d_card(entry, svg_filename, glb_filename))
+                    end
                 else
                     push!(cards, build_2d_card(entry, svg_filename))
                 end
@@ -411,6 +485,12 @@ $(join(cards, "\n"))
         }
         .media-view { display: none; }
         .media-view.active { display: block; }
+        .view-photo img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
@@ -418,7 +498,7 @@ $(join(cards, "\n"))
 $(join(nav_links, "\n"))
     </nav>
     <h1>Physis — L-System Gallery</h1>
-    <p class="subtitle">100 L-systems from <em>The Algorithmic Beauty of Plants</em> and classic fractals — plants with interactive 3D</p>
+    <p class="subtitle">L-systems from <em>The Algorithmic Beauty of Plants</em> and classic fractals — plants with interactive 3D and photorealistic renders</p>
 $(join(sections_html, "\n"))
     <script>
     function toggleView(btn, view) {

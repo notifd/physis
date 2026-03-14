@@ -212,5 +212,42 @@ include(joinpath(@__DIR__, "..", "scripts", "generate_gallery.jl"))
                 @test occursin("media-view", html)
             end
         end
+
+        @testset "Photo card builder" begin
+            entry = first(e for e in GALLERY if is_3d_species(e))
+            card = build_3d_photo_card(entry, "test.svg", "test.glb", "test_photo.png")
+            @test occursin("view-photo", card)
+            @test occursin("view-3d", card)
+            @test occursin("view-2d", card)
+            @test occursin("test_photo.png", card)
+            @test occursin("test.glb", card)
+            @test occursin("test.svg", card)
+            # Photo tab is active by default
+            @test occursin("'photo')\">Photo</button>", card)
+        end
+
+        @testset "Photorealistic gallery integration" begin
+            blender = find_blender()
+            if blender !== nothing
+                mktempdir() do tmpdir
+                    generate_gallery(tmpdir)
+                    html = read(joinpath(tmpdir, "index.html"), String)
+
+                    # Photo tab CSS present
+                    @test occursin("view-photo", html)
+
+                    # Photo PNGs exist for 3D species
+                    entries_3d = [e for e in GALLERY if is_3d_species(e)]
+                    for entry in entries_3d
+                        photo_filename = entry_slug(entry.name) * "_photo.png"
+                        photo_path = joinpath(tmpdir, photo_filename)
+                        @test isfile(photo_path)
+                        @test filesize(photo_path) > 0
+                    end
+                end
+            else
+                @info "Blender not found — skipping photorealistic gallery integration test"
+            end
+        end
     end
 end
