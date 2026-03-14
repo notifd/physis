@@ -10,7 +10,7 @@ Full pipeline: derive → interpret3d → segments_to_mesh → optional export_g
 
 """
     render_lsystem_3d(axiom, ruleset, generations;
-                      angle=25.0, step=1.0, width=1.0,
+                      angle=25.0, step=1.0, width=1.0, step_scale=1.0,
                       base_radius=0.1, taper=0.7, mesh_segments=8,
                       output_path=nothing, color=(0.45, 0.32, 0.18),
                       rng=Random.default_rng()) -> TriangleMesh
@@ -29,6 +29,7 @@ function render_lsystem_3d(
     angle::Real=25.0,
     step::Real=1.0,
     width::Real=1.0,
+    step_scale::Real=1.0,
     base_radius::Float64=0.1,
     taper::Float64=0.7,
     mesh_segments::Int=8,
@@ -37,7 +38,7 @@ function render_lsystem_3d(
     rng::AbstractRNG=Random.default_rng()
 )
     derived = derive(axiom, ruleset, generations; rng=rng)
-    segments = interpret3d(derived; angle=angle, step=step, width=width)
+    segments = interpret3d(derived; angle=angle, step=step, width=width, step_scale=step_scale)
 
     isempty(segments) && throw(ArgumentError(
         "derivation produced no drawable segments (no F symbols after $generations generations)"))

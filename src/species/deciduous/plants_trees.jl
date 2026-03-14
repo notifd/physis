@@ -206,14 +206,12 @@ register_species!(LSystemDef(
 # 59. 3D Ternary Tree (Houdini/ABOP)
 # The canonical non-parametric 3D L-system tree. Three branches pitched
 # down and separated by 90° roll at each node.
-# Note: Houdini source prefixes the rule with `"` (scale-down operator)
-# which we don't support; branches are uniform length without it.
 register_species!(LSystemDef(
     name = "3D Ternary Tree (Houdini)",
     category = :plants_trees,
     axiom = LString("FFFA"),
     rules = RuleSet([
-        Rule(LSymbol('A'), LString("[&FFFA]////[&FFFA]////[&FFFA]")),
+        Rule(LSymbol('A'), LString("\"[&FFFA]////[&FFFA]////[&FFFA]")),
     ]),
     generations = 4,
     angle = 22.5,
@@ -222,9 +220,10 @@ register_species!(LSystemDef(
         :reference => "Houdini L-System documentation, SideFX; derived from ABOP",
         :linecolor => "#50fa7b",
         :linewidth => 1.0,
-        :rule_notation => "A → [&FFFA]////[&FFFA]////[&FFFA]",
+        :rule_notation => "A → \"[&FFFA]////[&FFFA]////[&FFFA]",
         :is_3d => true,
         :glb_color => (0.35, 0.25, 0.15),
+        :step_scale => 0.77,
     ),
 ))
 

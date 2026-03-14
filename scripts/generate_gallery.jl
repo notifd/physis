@@ -74,11 +74,13 @@ function render_entry_3d(entry, def::LSystemDef, outdir::String)
     base_radius = get(def.metadata, :glb_base_radius, DEFAULT_GLB_BASE_RADIUS)
     taper = get(def.metadata, :glb_taper, DEFAULT_GLB_TAPER)
     gens = get(def.metadata, :glb_generations, def.generations)
+    step_scale = get(def.metadata, :step_scale, 1.0)
 
     try
         render_lsystem_3d(
             def.axiom, def.rules, gens;
             angle=def.angle,
+            step_scale=step_scale,
             base_radius=base_radius,
             taper=taper,
             output_path=filepath,

@@ -64,6 +64,7 @@ Interpret an L-string as 2D turtle graphics commands, returning line segments.
 - `f` / `f(d)` — move forward without drawing
 - `+` / `+(a)` — turn left by `angle` degrees (or `a` degrees)
 - `-` / `-(a)` — turn right by `angle` degrees (or `a` degrees)
+- `"` — multiply step length by `step_scale` (Houdini length scaling)
 - `[` — push turtle state onto branch stack
 - `]` — pop turtle state from branch stack
 - All other symbols — ignored
@@ -71,12 +72,14 @@ Interpret an L-string as 2D turtle graphics commands, returning line segments.
 # Arguments
 - `angle`: default turn angle in degrees (default 25.0)
 - `step`: default forward step size (default 1.0)
+- `step_scale`: multiplier applied to step when `"` is encountered (default 1.0)
 
-Reference: ABOP §1.5
+Reference: ABOP §1.5; Houdini L-System documentation (SideFX)
 """
-function interpret2d(ls::LString; angle::Real=25.0, step::Real=1.0)
+function interpret2d(ls::LString; angle::Real=25.0, step::Real=1.0, step_scale::Real=1.0)
     turtle = TurtleState2D(; step=Float64(step))
     angle_rad = deg2rad(Float64(angle))
+    scale = Float64(step_scale)
     stack = TurtleState2D[]
     segments = LineSegment2D[]
     # Pre-count F symbols to avoid repeated reallocation
@@ -105,6 +108,8 @@ function interpret2d(ls::LString; angle::Real=25.0, step::Real=1.0)
             a = _get_angle(sym, angle_rad)
             turtle.heading = mod2pi(turtle.heading - a)
             heading_dirty = true
+        elseif c == '"'
+            turtle.step *= scale
         elseif c == '['
             push!(stack, copy(turtle))
         elseif c == ']'
