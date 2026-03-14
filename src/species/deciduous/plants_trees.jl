@@ -50,7 +50,7 @@ register_species!(LSystemDef(
         Rule(LSymbol('X'), LString("F[+X]F[-X]+X")),
         Rule(LSymbol('F'), LString("FF")),
     ]),
-    generations = 6,
+    generations = 7,
     angle = 20.0,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
@@ -70,7 +70,7 @@ register_species!(LSystemDef(
         Rule(LSymbol('X'), LString("F[+X][-X]FX")),
         Rule(LSymbol('F'), LString("FF")),
     ]),
-    generations = 6,
+    generations = 7,
     angle = 25.7,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
@@ -206,6 +206,8 @@ register_species!(LSystemDef(
 # 59. 3D Ternary Tree (Houdini/ABOP)
 # The canonical non-parametric 3D L-system tree. Three branches pitched
 # down and separated by 90° roll at each node.
+# Note: Houdini source prefixes the rule with `"` (scale-down operator)
+# which we don't support; branches are uniform length without it.
 register_species!(LSystemDef(
     name = "3D Ternary Tree (Houdini)",
     category = :plants_trees,
@@ -236,7 +238,7 @@ register_species!(LSystemDef(
     rules = RuleSet([
         Rule(LSymbol('F'), LString("F[-&\\F][\\++&F]||F[--&/F][+&F]")),
     ]),
-    generations = 4,
+    generations = 3,
     angle = 22.5,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
@@ -280,7 +282,7 @@ register_species!(LSystemDef(
     rules = RuleSet([
         Rule(LSymbol('F'), LString("F[-&\\F][\\++&F]|F[-&/F][+&F]")),
     ]),
-    generations = 5,
+    generations = 3,
     angle = 12.0,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
