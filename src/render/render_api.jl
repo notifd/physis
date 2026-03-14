@@ -83,16 +83,24 @@ end
              backgroundcolor=:white, figsize=(800,800), margin=0.1) -> Figure
 
 Render 2D line segments to a Makie Figure. Requires a backend (e.g. `using CairoMakie`).
+
+Throws an informative error if no rendering backend (e.g. CairoMakie) is loaded.
 """
-function render2d end
+function render2d(args...; kwargs...)
+    error("No rendering backend loaded. Run `using CairoMakie` before calling render2d.")
+end
 
 """
     save_render(path, segments; kwargs...) -> Figure
 
 Render 2D line segments and save to a file (PNG/SVG/PDF inferred from extension).
 Requires a backend (e.g. `using CairoMakie`).
+
+Throws an informative error if no rendering backend (e.g. CairoMakie) is loaded.
 """
-function save_render end
+function save_render(args...; kwargs...)
+    error("No rendering backend loaded. Run `using CairoMakie` before calling save_render.")
+end
 
 # ──────────────────────────────────────────────────────────────────
 # render_lsystem — full pipeline

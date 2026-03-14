@@ -8,6 +8,7 @@ include("core/rules.jl")
 include("core/rewriter.jl")
 
 # ── Turtle interpreters ─────────────────────────────────────────
+include("turtle/common.jl")
 include("turtle/turtle2d.jl")
 include("turtle/turtle3d.jl")
 

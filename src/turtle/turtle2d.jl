@@ -126,14 +126,4 @@ function interpret2d(ls::LString; angle::Real=25.0, step::Real=1.0, step_scale::
     segments
 end
 
-# ──────────────────────────────────────────────────────────────────
-# Internal helpers
-# ──────────────────────────────────────────────────────────────────
-
-"""Extract step distance from a parametric symbol, or use default."""
-_get_step(::LSymbol, default::Float64) = default
-_get_step(sym::ParametricSymbol, default::Float64) = sym.params[1]
-
-"""Extract angle (converting degrees → radians) from a parametric symbol, or use default (already radians)."""
-_get_angle(::LSymbol, default_rad::Float64) = default_rad
-_get_angle(sym::ParametricSymbol, ::Float64) = deg2rad(sym.params[1])
+# Internal helpers (_get_step, _get_angle) are in turtle/common.jl

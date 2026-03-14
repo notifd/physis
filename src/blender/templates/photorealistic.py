@@ -239,6 +239,13 @@ bg_node.inputs["Strength"].default_value = 1.5
 node_tree.links.new(sky_node.outputs["Color"], bg_node.inputs["Color"])
 node_tree.links.new(bg_node.outputs["Background"], output_node.inputs["Surface"])
 
+# Volumetric atmosphere — subtle haze for depth perception
+vol_scatter = node_tree.nodes.new("ShaderNodeVolumeScatter")
+vol_scatter.inputs["Color"].default_value = (0.8, 0.85, 0.9, 1.0)
+vol_scatter.inputs["Density"].default_value = 0.002
+vol_scatter.inputs["Anisotropy"].default_value = 0.3
+node_tree.links.new(vol_scatter.outputs["Volume"], output_node.inputs["Volume"])
+
 # ── 7. Ground plane with procedural earth material ─────────────────
 
 ground_plane = {{GROUND_PLANE}}
