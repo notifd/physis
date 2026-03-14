@@ -143,11 +143,11 @@ Tests that:
         end
     end
 
-    @testset "All 100 species registered" begin
-        @test length(list_species()) == 100
+    @testset "All 82 species registered" begin
+        @test length(list_species()) == 82
         # All names unique
         names = [s.name for s in list_species()]
-        @test length(unique(names)) == 100
+        @test length(unique(names)) == 82
     end
 
     @testset "All species produce segments" begin

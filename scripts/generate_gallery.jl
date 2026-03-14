@@ -32,6 +32,7 @@ const GalleryEntry = @NamedTuple begin
     linewidth::Float64
     reference::String
     rule_notation::String
+    is_3d::Bool
 end
 
 # ── Slug helper ──────────────────────────────────────────────────
@@ -53,7 +54,7 @@ end
 
 Return true if the gallery entry is a plant/tree species that should get a 3D render.
 """
-is_3d_species(entry) = entry.category == "Plants & Trees"
+is_3d_species(entry) = entry.is_3d
 
 const DEFAULT_GLB_COLOR = (0.18, 0.55, 0.22)
 const DEFAULT_GLB_BASE_RADIUS = 0.05
@@ -177,6 +178,7 @@ function species_to_gallery_entry(def::LSystemDef)
         linewidth = get(def.metadata, :linewidth, 0.5),
         reference = get(def.metadata, :reference, ""),
         rule_notation = get(def.metadata, :rule_notation, ""),
+        is_3d = get(def.metadata, :is_3d, false),
     )
 end
 

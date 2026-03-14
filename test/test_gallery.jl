@@ -15,8 +15,8 @@ include(joinpath(@__DIR__, "..", "scripts", "generate_gallery.jl"))
 
 @testset "Gallery L-Systems" begin
 
-    @testset "Gallery has 100 entries" begin
-        @test length(GALLERY) == 100
+    @testset "Gallery has 82 entries" begin
+        @test length(GALLERY) == 82
         @test all(e -> e.name isa String && !isempty(e.name), GALLERY)
         @test all(e -> e.generations > 0, GALLERY)
         @test all(e -> e.angle > 0, GALLERY)
@@ -109,26 +109,28 @@ include(joinpath(@__DIR__, "..", "scripts", "generate_gallery.jl"))
 
     @testset "3D Gallery Generation" begin
 
-        @testset "is_3d_species identifies plants vs fractals" begin
-            # Find a plant entry and a fractal entry
-            plant_entry = first(e for e in GALLERY if e.category == "Plants & Trees")
-            fractal_entry = first(e for e in GALLERY if e.category == "Fractal Curves")
-            dragon_entry = first(e for e in GALLERY if e.category == "Dragon Family")
-            sierpinski_entry = first(e for e in GALLERY if e.category == "Sierpinski Family")
-            space_entry = first(e for e in GALLERY if e.category == "Space-Filling Curves")
+        @testset "is_3d_species identifies 3D vs 2D entries" begin
+            # 3D species have is_3d=true in metadata
+            entries_3d = [e for e in GALLERY if is_3d_species(e)]
+            entries_2d = [e for e in GALLERY if !is_3d_species(e)]
 
-            @test is_3d_species(plant_entry) == true
+            @test length(entries_3d) == 7
+            @test all(e -> e.category == "Plants & Trees", entries_3d)
+
+            # 2D plants exist but are not 3D
+            plants_2d = [e for e in entries_2d if e.category == "Plants & Trees"]
+            @test length(plants_2d) == 10
+
+            # Fractals are never 3D
+            fractal_entry = first(e for e in GALLERY if e.category == "Fractal Curves")
             @test is_3d_species(fractal_entry) == false
-            @test is_3d_species(dragon_entry) == false
-            @test is_3d_species(sierpinski_entry) == false
-            @test is_3d_species(space_entry) == false
         end
 
         @testset "render_entry_3d produces valid GLB files" begin
             species_lookup = Dict(def.name => def for def in list_species())
-            # Pick two small plant species for speed
-            plant_entries = [e for e in GALLERY if e.category == "Plants & Trees"]
-            test_entries = plant_entries[1:2]
+            # Pick two 3D species for testing
+            entries_3d = [e for e in GALLERY if is_3d_species(e)]
+            test_entries = entries_3d[1:2]
 
             mktempdir() do tmpdir
                 for entry in test_entries
@@ -186,18 +188,18 @@ include(joinpath(@__DIR__, "..", "scripts", "generate_gallery.jl"))
                 # toggleView JS present
                 @test occursin("toggleView", html)
 
-                # Plant cards have model-viewer elements
-                plant_entries = [e for e in GALLERY if e.category == "Plants & Trees"]
-                for entry in plant_entries
+                # 3D species have GLB files and model-viewer elements
+                entries_3d = [e for e in GALLERY if is_3d_species(e)]
+                for entry in entries_3d
                     glb_filename = entry_slug(entry.name) * ".glb"
                     glb_path = joinpath(tmpdir, glb_filename)
                     @test isfile(glb_path)
                     @test occursin(glb_filename, html)
                 end
 
-                # Fractal cards do NOT have model-viewer
-                fractal_entries = [e for e in GALLERY if e.category != "Plants & Trees"]
-                for entry in fractal_entries
+                # Non-3D entries do NOT have GLB files
+                entries_2d = [e for e in GALLERY if !is_3d_species(e)]
+                for entry in entries_2d
                     glb_filename = entry_slug(entry.name) * ".glb"
                     @test !isfile(joinpath(tmpdir, glb_filename))
                 end

@@ -1,5 +1,11 @@
-# Plants & Trees — 35 plant and tree L-systems
-# Reference: ABOP §1.5, Fig 1.24
+# Plants & Trees — Documented L-system plant models from the literature
+#
+# 2D plants: ABOP §1.5 Fig 1.24a-f, Paul Bourke's collection
+# 3D plants: Houdini/ABOP ternary tree, Cornell CS490, L3D repository
+#
+# Every entry below has a literature citation. No made-up species.
+
+# ── 2D Plants (ABOP Fig 1.24) ───────────────────────────────────
 
 # 49. Plant 1 (ABOP 1.24a)
 register_species!(LSystemDef(
@@ -11,7 +17,7 @@ register_species!(LSystemDef(
     angle = 25.7,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "ABOP Fig 1.24a",
+        :reference => "ABOP Fig 1.24a, p.25",
         :linecolor => "#50fa7b",
         :linewidth => 1.0,
         :rule_notation => "F → F[+F]F[-F]F",
@@ -28,7 +34,7 @@ register_species!(LSystemDef(
     angle = 22.5,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "ABOP Fig 1.24c",
+        :reference => "ABOP Fig 1.24c, p.25",
         :linecolor => "#50fa7b",
         :linewidth => 1.0,
         :rule_notation => "F → FF-[-F+F+F]+[+F-F-F]",
@@ -48,7 +54,7 @@ register_species!(LSystemDef(
     angle = 20.0,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "ABOP Fig 1.24d",
+        :reference => "ABOP Fig 1.24d, p.25",
         :linecolor => "#50fa7b",
         :linewidth => 0.8,
         :rule_notation => "X → F[+X]F[-X]+X, F → FF",
@@ -68,7 +74,7 @@ register_species!(LSystemDef(
     angle = 25.7,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "ABOP Fig 1.24e",
+        :reference => "ABOP Fig 1.24e, p.25",
         :linecolor => "#50fa7b",
         :linewidth => 0.8,
         :rule_notation => "X → F[+X][-X]FX, F → FF",
@@ -88,7 +94,7 @@ register_species!(LSystemDef(
     angle = 22.5,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "ABOP Fig 1.24f",
+        :reference => "ABOP Fig 1.24f, p.25",
         :linecolor => "#50fa7b",
         :linewidth => 1.0,
         :rule_notation => "X → F-[[X]+X]+F[+FX]-X, F → FF",
@@ -105,556 +111,251 @@ register_species!(LSystemDef(
     angle = 20.0,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "ABOP Fig 1.24b",
+        :reference => "ABOP Fig 1.24b, p.25",
         :linecolor => "#50fa7b",
         :linewidth => 1.0,
         :rule_notation => "F → F[+F]F[-F][F]",
     ),
 ))
 
-# 55. Willow
+# ── 2D Plants (Paul Bourke collection) ──────────────────────────
+
+# 55. Bush 1 (Bourke)
 register_species!(LSystemDef(
-    name = "Willow",
+    name = "Bush 1 (Bourke)",
     category = :plants_trees,
-    axiom = LString("X"),
+    axiom = LString("Y"),
     rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[-X][+X]FX")),
-        Rule(LSymbol('F'), LString("FF")),
+        Rule(LSymbol('X'), LString("X[-FFF][+FFF]FX")),
+        Rule(LSymbol('Y'), LString("YFX[+Y][-Y]")),
     ]),
     generations = 6,
-    angle = 15.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Plant variant",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "X → F[-X][+X]FX, F → FF",
-    ),
-))
-
-# 56. Fern
-register_species!(LSystemDef(
-    name = "Fern",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F+[[X]-X]-F[-FX]+X")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 5,
-    angle = 25.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Fern-like plant",
-        :linecolor => "#50fa7b",
-        :linewidth => 1.0,
-        :rule_notation => "X → F+[[X]-X]-F[-FX]+X, F → FF",
-    ),
-))
-
-# 57. Bamboo
-register_species!(LSystemDef(
-    name = "Bamboo",
-    category = :plants_trees,
-    axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("FF[+F][-F]"))]),
-    generations = 5,
-    angle = 30.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Bamboo-like plant",
-        :linecolor => "#50fa7b",
-        :linewidth => 1.0,
-        :rule_notation => "F → FF[+F][-F]",
-    ),
-))
-
-# 58. Seaweed
-register_species!(LSystemDef(
-    name = "Seaweed",
-    category = :plants_trees,
-    axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("FF+[+F-F-F]-[-F+F+F]"))]),
-    generations = 4,
-    angle = 22.5,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Seaweed pattern",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "F → FF+[+F-F-F]-[-F+F+F]",
-    ),
-))
-
-# 59. Bushy Tree
-register_species!(LSystemDef(
-    name = "Bushy Tree",
-    category = :plants_trees,
-    axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("FF+[+F-F-F]-[-F+F+F]"))]),
-    generations = 4,
     angle = 25.7,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "Bushy tree variant",
+        :reference => "Paul Bourke, paulbourke.net/fractals/lsys/",
         :linecolor => "#50fa7b",
-        :linewidth => 1.0,
-        :rule_notation => "F → FF+[+F-F-F]-[-F+F+F] (25.7°)",
+        :linewidth => 0.8,
+        :rule_notation => "X → X[-FFF][+FFF]FX, Y → YFX[+Y][-Y]",
     ),
 ))
 
-# 60. Thistle
+# 56. Bush 3 (Bourke)
 register_species!(LSystemDef(
-    name = "Thistle",
+    name = "Bush 3 (Bourke)",
     category = :plants_trees,
     axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("F[+F]F[-F]F"))]),
-    generations = 4,
-    angle = 30.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Thistle-like plant",
-        :linecolor => "#50fa7b",
-        :linewidth => 1.0,
-        :rule_notation => "F → F[+F]F[-F]F (30°)",
-    ),
-))
-
-# 61. Cedar
-register_species!(LSystemDef(
-    name = "Cedar",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[+X][-X]FX")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 5,
-    angle = 30.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Cedar-like tree",
-        :linecolor => "#50fa7b",
-        :linewidth => 1.0,
-        :rule_notation => "X → F[+X][-X]FX, F → FF (30°)",
-    ),
-))
-
-# 62. Elm
-register_species!(LSystemDef(
-    name = "Elm",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[+X]F[-X]+X")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 5,
-    angle = 25.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Elm-like tree",
-        :linecolor => "#50fa7b",
-        :linewidth => 1.0,
-        :rule_notation => "X → F[+X]F[-X]+X, F → FF (25°)",
-    ),
-))
-
-# 63. Spruce
-register_species!(LSystemDef(
-    name = "Spruce",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[-X][+X]FX")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 5,
-    angle = 35.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Spruce-like tree",
-        :linecolor => "#50fa7b",
-        :linewidth => 1.0,
-        :rule_notation => "X → F[-X][+X]FX, F → FF (35°)",
-    ),
-))
-
-# 64. Mangrove
-register_species!(LSystemDef(
-    name = "Mangrove",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[+X][-X]F[-X]FX")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 5,
-    angle = 22.5,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Mangrove-like tree",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "X → F[+X][-X]F[-X]FX, F → FF",
-    ),
-))
-
-# 65. Palm Frond
-register_species!(LSystemDef(
-    name = "Palm Frond",
-    category = :plants_trees,
-    axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("F[+F][-F]F[+F]"))]),
-    generations = 4,
-    angle = 35.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Palm frond pattern",
-        :linecolor => "#50fa7b",
-        :linewidth => 1.0,
-        :rule_notation => "F → F[+F][-F]F[+F]",
-    ),
-))
-
-# 66. Bush
-register_species!(LSystemDef(
-    name = "Bush",
-    category = :plants_trees,
-    axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("FF[+F][-F]F[-F][+F]"))]),
-    generations = 4,
-    angle = 20.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Bush pattern",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "F → FF[+F][-F]F[-F][+F]",
-    ),
-))
-
-# 67. Birch
-register_species!(LSystemDef(
-    name = "Birch",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[-X]+F[+X]-X")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 5,
-    angle = 22.5,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Birch-like tree",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "X → F[-X]+F[+X]-X, F → FF",
-    ),
-))
-
-# 68. Acacia
-register_species!(LSystemDef(
-    name = "Acacia",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("FF[+X][-X]F[+X]FX")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 4,
-    angle = 30.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Acacia-like tree",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "X → FF[+X][-X]F[+X]FX, F → FF",
-    ),
-))
-
-# 69. Heather
-register_species!(LSystemDef(
-    name = "Heather",
-    category = :plants_trees,
-    axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("F[+F]F[-F]"))]),
-    generations = 5,
-    angle = 18.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Heather-like shrub",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.6,
-        :rule_notation => "F → F[+F]F[-F] (18°)",
-    ),
-))
-
-# 70. Kelp
-register_species!(LSystemDef(
-    name = "Kelp",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F+[[X]-X]-F[-FX]+X")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 5,
-    angle = 20.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Kelp-like pattern",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "X → F+[[X]-X]-F[-FX]+X, F → FF (20°)",
-    ),
-))
-
-# 71. Ivy
-register_species!(LSystemDef(
-    name = "Ivy",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[-X]F[+X]-X")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 5,
-    angle = 28.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Ivy-like vine",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "X → F[-X]F[+X]-X, F → FF",
-    ),
-))
-
-# 72. Moss
-register_species!(LSystemDef(
-    name = "Moss",
-    category = :plants_trees,
-    axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("F[+F][-F]F[+F][-F]F"))]),
+    rules = RuleSet([Rule(LSymbol('F'), LString("F[+FF][-FF]F[-F][+F]F"))]),
     generations = 3,
-    angle = 25.7,
+    angle = 35.0,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "Moss-like growth",
+        :reference => "Paul Bourke, paulbourke.net/fractals/lsys/",
         :linecolor => "#50fa7b",
-        :linewidth => 0.6,
-        :rule_notation => "F → F[+F][-F]F[+F][-F]F",
+        :linewidth => 1.0,
+        :rule_notation => "F → F[+FF][-FF]F[-F][+F]F",
     ),
 ))
 
-# 73. Pine
+# 57. Weed (Bourke)
 register_species!(LSystemDef(
-    name = "Pine",
+    name = "Weed (Bourke)",
     category = :plants_trees,
-    axiom = LString("X"),
+    axiom = LString("F"),
     rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[-X][+X]FX")),
-        Rule(LSymbol('F'), LString("FF")),
+        Rule(LSymbol('F'), LString("FF-[XY]+[XY]")),
+        Rule(LSymbol('X'), LString("+FY")),
+        Rule(LSymbol('Y'), LString("-FX")),
     ]),
     generations = 6,
-    angle = 25.0,
+    angle = 22.5,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "Pine-like tree",
+        :reference => "Paul Bourke, paulbourke.net/fractals/lsys/",
         :linecolor => "#50fa7b",
         :linewidth => 0.8,
-        :rule_notation => "X → F[-X][+X]FX, F → FF (25°)",
+        :rule_notation => "F → FF-[XY]+[XY], X → +FY, Y → -FX",
     ),
 ))
 
-# 74. Reed
+# 58. Saupe Bush (Bourke/Saupe)
 register_species!(LSystemDef(
-    name = "Reed",
+    name = "Saupe Bush (Bourke)",
     category = :plants_trees,
-    axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("FF[+F][-F]"))]),
-    generations = 5,
-    angle = 15.0,
+    axiom = LString("VZFFF"),
+    rules = RuleSet([
+        Rule(LSymbol('V'), LString("[+++W][---W]YV")),
+        Rule(LSymbol('W'), LString("+X[-W]Z")),
+        Rule(LSymbol('X'), LString("-W[+X]Z")),
+        Rule(LSymbol('Y'), LString("YZ")),
+        Rule(LSymbol('Z'), LString("[-FFF][+FFF]F")),
+    ]),
+    generations = 7,
+    angle = 20.0,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "Reed-like plant",
+        :reference => "D. Saupe, via Paul Bourke, paulbourke.net/fractals/lsys/",
         :linecolor => "#50fa7b",
         :linewidth => 0.6,
-        :rule_notation => "F → FF[+F][-F] (15°)",
+        :rule_notation => "V → [+++W][---W]YV, W → +X[-W]Z, X → -W[+X]Z, Y → YZ, Z → [-FFF][+FFF]F",
     ),
 ))
 
-# 75. Lilac
+# ── 3D Plants (literature) ──────────────────────────────────────
+
+# 59. 3D Ternary Tree (Houdini/ABOP)
+# The canonical non-parametric 3D L-system tree. Three branches pitched
+# down and separated by 90° roll at each node.
 register_species!(LSystemDef(
-    name = "Lilac",
+    name = "3D Ternary Tree (Houdini)",
     category = :plants_trees,
-    axiom = LString("X"),
+    axiom = LString("FFFA"),
     rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[+X]F[-X]FX")),
-        Rule(LSymbol('F'), LString("FF")),
+        Rule(LSymbol('A'), LString("[&FFFA]////[&FFFA]////[&FFFA]")),
     ]),
-    generations = 5,
+    generations = 4,
+    angle = 22.5,
+    draw_chars = Set(['F']),
+    metadata = Dict{Symbol, Any}(
+        :reference => "Houdini L-System documentation, SideFX; derived from ABOP",
+        :linecolor => "#50fa7b",
+        :linewidth => 1.0,
+        :rule_notation => "A → [&FFFA]////[&FFFA]////[&FFFA]",
+        :is_3d => true,
+        :glb_color => (0.35, 0.25, 0.15),
+    ),
+))
+
+# 60. Cornell 3D Tree 1
+# 3D tree with pitch, roll, and yaw branching. Uses turn-around (||)
+# for symmetric branch pairs.
+register_species!(LSystemDef(
+    name = "Cornell 3D Tree 1",
+    category = :plants_trees,
+    axiom = LString("F"),
+    rules = RuleSet([
+        Rule(LSymbol('F'), LString("F[-&\\F][\\++&F]||F[--&/F][+&F]")),
+    ]),
+    generations = 4,
+    angle = 22.5,
+    draw_chars = Set(['F']),
+    metadata = Dict{Symbol, Any}(
+        :reference => "Chen, Cornell CS490 Project, 1994-95, 3D-1",
+        :linecolor => "#50fa7b",
+        :linewidth => 1.0,
+        :rule_notation => "F → F[-&\\F][\\++&F]||F[--&/F][+&F]",
+        :is_3d => true,
+        :glb_color => (0.18, 0.55, 0.22),
+    ),
+))
+
+# 61. Cornell 3D Tree 2
+# Compact 3D tree with pitch-yaw branches and roll separation.
+register_species!(LSystemDef(
+    name = "Cornell 3D Tree 2",
+    category = :plants_trees,
+    axiom = LString("F"),
+    rules = RuleSet([
+        Rule(LSymbol('F'), LString("F[&+F]F[-/F][-/F][&F]")),
+    ]),
+    generations = 3,
     angle = 28.0,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "Lilac-like shrub",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "X → F[+X]F[-X]FX, F → FF (28°)",
-    ),
-))
-
-# 76. Lavender
-register_species!(LSystemDef(
-    name = "Lavender",
-    category = :plants_trees,
-    axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("F[+F]F[-F][+F][-F]F"))]),
-    generations = 3,
-    angle = 18.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Lavender-like plant",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.6,
-        :rule_notation => "F → F[+F]F[-F][+F][-F]F",
-    ),
-))
-
-# 77. Sage
-register_species!(LSystemDef(
-    name = "Sage",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[+X][-X]F[+X]X")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 4,
-    angle = 30.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Sage-like shrub",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "X → F[+X][-X]F[+X]X, F → FF",
-    ),
-))
-
-# 78. Bracken
-register_species!(LSystemDef(
-    name = "Bracken",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F-[[X]+X]+F[+FX]-X")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 4,
-    angle = 25.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Bracken fern",
+        :reference => "Chen, Cornell CS490 Project, 1994-95, 3D-2",
         :linecolor => "#50fa7b",
         :linewidth => 1.0,
-        :rule_notation => "X → F-[[X]+X]+F[+FX]-X, F → FF (25°)",
+        :rule_notation => "F → F[&+F]F[-/F][-/F][&F]",
+        :is_3d => true,
+        :glb_color => (0.18, 0.55, 0.22),
     ),
 ))
 
-# 79. Cypress
+# 62. L3D Simple 3D Bush
+# Curved 3D bush using pitch, roll, yaw, and turn-around.
 register_species!(LSystemDef(
-    name = "Cypress",
+    name = "3D Bush (L3D)",
     category = :plants_trees,
-    axiom = LString("X"),
+    axiom = LString("F"),
     rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[+X][-X]FX")),
-        Rule(LSymbol('F'), LString("FF")),
+        Rule(LSymbol('F'), LString("F[-&\\F][\\++&F]|F[-&/F][+&F]")),
     ]),
     generations = 5,
     angle = 12.0,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "Cypress-like tree",
+        :reference => "abiusx/L3D, simple.l3d",
         :linecolor => "#50fa7b",
         :linewidth => 0.8,
-        :rule_notation => "X → F[+X][-X]FX, F → FF (12°)",
+        :rule_notation => "F → F[-&\\F][\\++&F]|F[-&/F][+&F]",
+        :is_3d => true,
+        :glb_color => (0.15, 0.45, 0.18),
     ),
 ))
 
-# 80. Hawthorn
+# 63. L3D 3D Bird's Nest
+# Complex two-rule 3D structure with interleaved branching.
 register_species!(LSystemDef(
-    name = "Hawthorn",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[+X]F[-X]-F[+X]X")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 4,
-    angle = 25.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Hawthorn-like tree",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.8,
-        :rule_notation => "X → F[+X]F[-X]-F[+X]X, F → FF",
-    ),
-))
-
-# 81. Vine
-register_species!(LSystemDef(
-    name = "Vine",
-    category = :plants_trees,
-    axiom = LString("X"),
-    rules = RuleSet([
-        Rule(LSymbol('X'), LString("F[+X][-X]F[-X]X")),
-        Rule(LSymbol('F'), LString("FF")),
-    ]),
-    generations = 5,
-    angle = 18.0,
-    draw_chars = Set(['F']),
-    metadata = Dict{Symbol, Any}(
-        :reference => "Vine-like plant",
-        :linecolor => "#50fa7b",
-        :linewidth => 0.6,
-        :rule_notation => "X → F[+X][-X]F[-X]X, F → FF (18°)",
-    ),
-))
-
-# 82. Rosemary
-register_species!(LSystemDef(
-    name = "Rosemary",
+    name = "3D Bird's Nest (L3D)",
     category = :plants_trees,
     axiom = LString("F"),
-    rules = RuleSet([Rule(LSymbol('F'), LString("F[+F][-F]F[+F]F"))]),
+    rules = RuleSet([
+        Rule(LSymbol('F'), LString("[-&/G][/++&G]||F[--&\\G][+&G]FF-[-F+F+F]-[^/F-F-F&\\]")),
+        Rule(LSymbol('G'), LString("F[+G][-G]F[+G][-G]FG")),
+    ]),
+    generations = 3,
+    angle = 15.0,
+    draw_chars = Set(['F']),
+    metadata = Dict{Symbol, Any}(
+        :reference => "abiusx/L3D, birds-nest.l3d",
+        :linecolor => "#50fa7b",
+        :linewidth => 0.8,
+        :rule_notation => "F → [-&/G][/++&G]||F[--&\\G][+&G]FF-[-F+F+F]-[^/F-F-F&\\], G → F[+G][-G]F[+G][-G]FG",
+        :is_3d => true,
+        :glb_color => (0.35, 0.25, 0.15),
+    ),
+))
+
+# 64. L3D 3D Tangle
+# Single-rule 3D structure with opposing pitch branches.
+register_species!(LSystemDef(
+    name = "3D Tangle (L3D)",
+    category = :plants_trees,
+    axiom = LString("F"),
+    rules = RuleSet([
+        Rule(LSymbol('F'), LString("FF-[&F^F^F]+[^F&F&F]+[^f^f&f]")),
+    ]),
     generations = 4,
     angle = 22.0,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "Rosemary-like shrub",
+        :reference => "abiusx/L3D, birds-nest2.l3d",
         :linecolor => "#50fa7b",
-        :linewidth => 0.6,
-        :rule_notation => "F → F[+F][-F]F[+F]F",
+        :linewidth => 0.8,
+        :rule_notation => "F → FF-[&F^F^F]+[^F&F&F]+[^f^f&f]",
+        :is_3d => true,
+        :glb_color => (0.20, 0.50, 0.25),
     ),
 ))
 
-# 83. Wisteria
+# 65. L3D 3D Seaweed
+# 3D seaweed with opposing pitch branches and roll separation.
 register_species!(LSystemDef(
-    name = "Wisteria",
+    name = "3D Seaweed (L3D)",
     category = :plants_trees,
-    axiom = LString("X"),
+    axiom = LString("F"),
     rules = RuleSet([
-        Rule(LSymbol('X'), LString("F-[[-X]+X]+F[+FX]-X")),
-        Rule(LSymbol('F'), LString("FF")),
+        Rule(LSymbol('F'), LString("FF-[&F^F^F]+[^F&F&F]/[^f^f&f]")),
     ]),
-    generations = 5,
-    angle = 20.0,
+    generations = 4,
+    angle = 22.0,
     draw_chars = Set(['F']),
     metadata = Dict{Symbol, Any}(
-        :reference => "Wisteria-like vine",
+        :reference => "abiusx/L3D, seaweed.l3d",
         :linecolor => "#50fa7b",
         :linewidth => 0.8,
-        :rule_notation => "X → F-[[-X]+X]+F[+FX]-X, F → FF",
+        :rule_notation => "F → FF-[&F^F^F]+[^F&F&F]/[^f^f&f]",
+        :is_3d => true,
+        :glb_color => (0.10, 0.40, 0.30),
     ),
 ))
