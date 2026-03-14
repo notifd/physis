@@ -126,6 +126,7 @@ Interpret an L-string as 3D turtle graphics commands, returning line segments.
 - `\\` / `\\(a)` — roll left (rotate around H)
 - `/` / `/(a)` — roll right (rotate around H)
 - `|` — turn around (180° yaw)
+- `"` — multiply step length by `step_scale` (Houdini length scaling)
 - `[` — push turtle state onto branch stack
 - `]` — pop turtle state from branch stack
 - All other symbols — ignored
@@ -134,10 +135,15 @@ Interpret an L-string as 3D turtle graphics commands, returning line segments.
 - `angle`: default rotation angle in degrees (default 25.0)
 - `step`: default forward step size (default 1.0)
 - `width`: default line width (default 1.0)
+- `step_scale`: multiplier applied to step when `"` is encountered (default 1.0)
+
+Reference: ABOP §1.5.3; Houdini L-System documentation (SideFX)
 """
-function interpret3d(ls::LString; angle::Real=25.0, step::Real=1.0, width::Real=1.0)
+function interpret3d(ls::LString; angle::Real=25.0, step::Real=1.0, width::Real=1.0,
+                     step_scale::Real=1.0)
     turtle = TurtleState3D(; step=Float64(step), width=Float64(width))
     angle_rad = deg2rad(Float64(angle))
+    scale = Float64(step_scale)
     stack = TurtleState3D[]
     segments = LineSegment3D[]
     sizehint!(segments, count(s -> name(s) == 'F', ls))
@@ -189,6 +195,8 @@ function interpret3d(ls::LString; angle::Real=25.0, step::Real=1.0, width::Real=
             turtle.heading = _rotate_vector(turtle.heading, turtle.up, Float64(π))
             turtle.left = _rotate_vector(turtle.left, turtle.up, Float64(π))
             step_count += 1
+        elseif c == '"'
+            turtle.step *= scale
         elseif c == '['
             push!(stack, copy(turtle))
         elseif c == ']'

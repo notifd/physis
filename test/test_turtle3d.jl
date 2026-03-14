@@ -286,4 +286,42 @@ using LinearAlgebra
             @test length(interpret3d(gen2; angle=25.7)) == 25
         end
     end
+
+    @testset "Step scale (\" command)" begin
+        @testset "\" reduces step length by scale factor" begin
+            ls = LString("F\"F")
+            segs = interpret3d(ls; angle=90.0, step=1.0, step_scale=0.5)
+            @test length(segs) == 2
+            len1 = norm(segs[1].stop - segs[1].start)
+            len2 = norm(segs[2].stop - segs[2].start)
+            @test len1 ≈ 1.0
+            @test len2 ≈ 0.5
+        end
+
+        @testset "\" inside branch is restored on pop" begin
+            ls = LString("F[\"F]F")
+            segs = interpret3d(ls; angle=90.0, step=1.0, step_scale=0.5)
+            @test length(segs) == 3
+            len1 = norm(segs[1].stop - segs[1].start)
+            len2 = norm(segs[2].stop - segs[2].start)
+            len3 = norm(segs[3].stop - segs[3].start)
+            @test len1 ≈ 1.0
+            @test len2 ≈ 0.5
+            @test len3 ≈ 1.0
+        end
+
+        @testset "Houdini ternary tree produces tapering branches" begin
+            axiom = LString("FFFA")
+            rules = RuleSet([
+                Rule(LSymbol('A'), LString("\"[&FFFA]////[&FFFA]////[&FFFA]")),
+            ])
+            derived = derive(axiom, rules, 2)
+            segs = interpret3d(derived; angle=22.5, step=1.0, step_scale=0.7)
+            # Gen 0 trunk segments should be length 1.0
+            @test norm(segs[1].stop - segs[1].start) ≈ 1.0
+            # After first \", gen 1 branches should be 0.7
+            gen1_branch = segs[4]  # first segment after first "
+            @test norm(gen1_branch.stop - gen1_branch.start) ≈ 0.7 atol=1e-10
+        end
+    end
 end

@@ -1,4 +1,5 @@
 using StaticArrays
+using LinearAlgebra
 
 @testset "Turtle2D" begin
     @testset "LineSegment2D" begin
@@ -222,6 +223,51 @@ using StaticArrays
             gen1 = derive(axiom, rs, 1)
             gen1_segs = interpret2d(gen1; angle=60.0)
             @test length(gen1_segs) == 12  # 3 * 4
+        end
+    end
+
+    @testset "Step scale (\" command)" begin
+        @testset "\" reduces step length by scale factor" begin
+            # F"F — second segment should be shorter
+            ls = LString("F\"F")
+            segs = interpret2d(ls; angle=90.0, step=1.0, step_scale=0.5)
+            @test length(segs) == 2
+            # First segment: full length 1.0
+            len1 = norm(segs[1].stop - segs[1].start)
+            @test len1 ≈ 1.0
+            # Second segment: scaled to 0.5
+            len2 = norm(segs[2].stop - segs[2].start)
+            @test len2 ≈ 0.5
+        end
+
+        @testset "Multiple \" compounds the scaling" begin
+            ls = LString("F\"\"F")
+            segs = interpret2d(ls; angle=90.0, step=1.0, step_scale=0.5)
+            @test length(segs) == 2
+            len2 = norm(segs[2].stop - segs[2].start)
+            @test len2 ≈ 0.25  # 0.5 * 0.5
+        end
+
+        @testset "\" inside branch is restored on pop" begin
+            # F["F]F — scale inside branch shouldn't affect after pop
+            ls = LString("F[\"F]F")
+            segs = interpret2d(ls; angle=90.0, step=1.0, step_scale=0.5)
+            @test length(segs) == 3
+            len1 = norm(segs[1].stop - segs[1].start)
+            len2 = norm(segs[2].stop - segs[2].start)
+            len3 = norm(segs[3].stop - segs[3].start)
+            @test len1 ≈ 1.0
+            @test len2 ≈ 0.5  # scaled inside branch
+            @test len3 ≈ 1.0  # restored after pop
+        end
+
+        @testset "Default step_scale=1.0 means \" is identity" begin
+            ls = LString("F\"F")
+            segs = interpret2d(ls; angle=90.0, step=1.0)
+            @test length(segs) == 2
+            len1 = norm(segs[1].stop - segs[1].start)
+            len2 = norm(segs[2].stop - segs[2].start)
+            @test len1 ≈ len2
         end
     end
 end
