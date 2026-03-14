@@ -32,10 +32,10 @@ MATERIAL_PARAMS = {
         "noise_scale_fine": 15.0,
         "noise_detail_fine": 12.0,
         "mapping_scale": (3.0, 3.0, 8.0),
-        "color_boost": 2.0,             # Multiply base color brightness
+        "color_boost": 1.4,             # Multiply base color brightness
         "noise_variation": 0.15,        # Subtle noise darkening
-        "height_darken_base": 0.9,      # Very gentle darkening at base
-        "height_lighten_tip": 1.1,      # Subtle lightening at tip
+        "height_darken_base": 0.88,     # Gentle darkening at base
+        "height_lighten_tip": 1.08,     # Subtle lightening at tip
         "roughness_min": 0.65,
         "roughness_max": 0.95,
         "bump_strength": 0.3,
@@ -55,10 +55,10 @@ MATERIAL_PARAMS = {
         "noise_scale_fine": 25.0,
         "noise_detail_fine": 10.0,
         "mapping_scale": (5.0, 5.0, 5.0),
-        "color_boost": 1.8,
+        "color_boost": 1.3,
         "noise_variation": 0.1,
         "height_darken_base": 0.85,
-        "height_lighten_tip": 1.15,
+        "height_lighten_tip": 1.1,
         "roughness_min": 0.35,
         "roughness_max": 0.65,
         "bump_strength": 0.15,
@@ -178,7 +178,7 @@ cam_data.dof.aperture_fstop = 5.6
 
 # 6a. Key light (Sun lamp) — strong and warm
 sun_data = bpy.data.lights.new("KeySun", "SUN")
-sun_data.energy = 12.0
+sun_data.energy = 5.0
 sun_data.angle = math.radians(2.0)
 sun_data.color = (1.0, 0.97, 0.92)
 sun_obj = bpy.data.objects.new("KeySun", sun_data)
@@ -187,8 +187,8 @@ bpy.context.collection.objects.link(sun_obj)
 
 # 6b. Fill light (Area lamp) — large soft cool fill
 fill_data = bpy.data.lights.new("FillLight", "AREA")
-fill_data.energy = 300.0
-fill_data.size = max_dim * 4.0
+fill_data.energy = 100.0
+fill_data.size = max_dim * 3.0
 fill_data.color = (0.85, 0.9, 1.0)
 fill_obj = bpy.data.objects.new("FillLight", fill_data)
 fill_obj.location = (
@@ -204,7 +204,7 @@ bpy.context.collection.objects.link(fill_obj)
 
 # 6c. Rim light (Spot lamp) — warm backlight edge definition
 rim_data = bpy.data.lights.new("RimLight", "SPOT")
-rim_data.energy = 400.0
+rim_data.energy = 150.0
 rim_data.spot_size = math.radians(60)
 rim_data.color = (1.0, 0.95, 0.85)
 rim_obj = bpy.data.objects.new("RimLight", rim_data)
@@ -234,7 +234,7 @@ sky_node.sky_type = "HOSEK_WILKIE"
 sky_node.sun_elevation = math.radians(40)
 sky_node.sun_rotation = math.radians(45)
 
-bg_node.inputs["Strength"].default_value = 3.0
+bg_node.inputs["Strength"].default_value = 1.5
 
 node_tree.links.new(sky_node.outputs["Color"], bg_node.inputs["Color"])
 node_tree.links.new(bg_node.outputs["Background"], output_node.inputs["Surface"])
