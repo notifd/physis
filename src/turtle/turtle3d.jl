@@ -18,24 +18,30 @@ using LinearAlgebra
 # ──────────────────────────────────────────────────────────────────
 
 """
-    LineSegment3D(start, stop, width)
+    LineSegment3D(start, stop, width, depth=0)
 
 A 3D line segment from `start` to `stop`, both `SVector{3,Float64}`,
-with a `width` for rendering thickness.
+with a `width` for rendering thickness and `depth` for branch stack depth
+(0 = trunk, increments on `[`).
 """
 struct LineSegment3D
     start::SVector{3, Float64}
     stop::SVector{3, Float64}
     width::Float64
+    depth::Int
 end
 
+# Backward-compatible 3-arg constructor (depth defaults to 0)
+LineSegment3D(start::SVector{3,Float64}, stop::SVector{3,Float64}, width::Float64) =
+    LineSegment3D(start, stop, width, 0)
+
 Base.:(==)(a::LineSegment3D, b::LineSegment3D) =
-    a.start == b.start && a.stop == b.stop && a.width == b.width
+    a.start == b.start && a.stop == b.stop && a.width == b.width && a.depth == b.depth
 Base.hash(s::LineSegment3D, h::UInt) =
-    hash(s.width, hash(s.stop, hash(s.start, hash(:LineSegment3D, h))))
+    hash(s.depth, hash(s.width, hash(s.stop, hash(s.start, hash(:LineSegment3D, h)))))
 Base.isapprox(a::LineSegment3D, b::LineSegment3D; kwargs...) =
     isapprox(a.start, b.start; kwargs...) && isapprox(a.stop, b.stop; kwargs...) &&
-    isapprox(a.width, b.width; kwargs...)
+    isapprox(a.width, b.width; kwargs...) && a.depth == b.depth
 
 function Base.show(io::IO, s::LineSegment3D)
     print(io, "(", s.start[1], ",", s.start[2], ",", s.start[3],
@@ -59,6 +65,7 @@ mutable struct TurtleState3D
     up::SVector{3, Float64}       # U — up direction
     step::Float64
     width::Float64
+    depth::Int                    # Branch stack depth (0 = trunk)
 end
 
 """
@@ -73,11 +80,11 @@ function TurtleState3D(; step::Float64=1.0, width::Float64=1.0)
         SVector(0.0, 1.0, 0.0),
         SVector(-1.0, 0.0, 0.0),
         SVector(0.0, 0.0, 1.0),
-        step, width
+        step, width, 0
     )
 end
 
-Base.copy(t::TurtleState3D) = TurtleState3D(t.pos, t.heading, t.left, t.up, t.step, t.width)
+Base.copy(t::TurtleState3D) = TurtleState3D(t.pos, t.heading, t.left, t.up, t.step, t.width, t.depth)
 
 # ──────────────────────────────────────────────────────────────────
 # Rotation helpers
@@ -156,7 +163,7 @@ function interpret3d(ls::LString; angle::Real=25.0, step::Real=1.0, width::Real=
         if c == 'F'
             d = _get_step(sym, turtle.step)
             new_pos = turtle.pos + d * turtle.heading
-            push!(segments, LineSegment3D(turtle.pos, new_pos, turtle.width))
+            push!(segments, LineSegment3D(turtle.pos, new_pos, turtle.width, turtle.depth))
             turtle.pos = new_pos
         elseif c == 'f'
             d = _get_step(sym, turtle.step)
@@ -199,6 +206,7 @@ function interpret3d(ls::LString; angle::Real=25.0, step::Real=1.0, width::Real=
             turtle.step *= scale
         elseif c == '['
             push!(stack, copy(turtle))
+            turtle.depth += 1
         elseif c == ']'
             isempty(stack) && throw(ArgumentError("unmatched ']': no state to pop from branch stack"))
             restored = pop!(stack)
@@ -208,6 +216,7 @@ function interpret3d(ls::LString; angle::Real=25.0, step::Real=1.0, width::Real=
             turtle.up = restored.up
             turtle.step = restored.step
             turtle.width = restored.width
+            turtle.depth = restored.depth
         end
 
         # Re-orthonormalize periodically to prevent drift

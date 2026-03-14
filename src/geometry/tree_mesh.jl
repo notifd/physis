@@ -20,6 +20,7 @@ function merge_meshes(meshes::Vector{TriangleMesh})
         SVector{3,Float64}[],
         NTuple{3,Int}[],
         SVector{2,Float64}[],
+        SVector{4,Float64}[],
     )
 
     total_verts = sum(length(m.vertices) for m in meshes)
@@ -28,6 +29,7 @@ function merge_meshes(meshes::Vector{TriangleMesh})
     all_verts = Vector{SVector{3,Float64}}(undef, total_verts)
     all_normals = Vector{SVector{3,Float64}}(undef, total_verts)
     all_uvs = Vector{SVector{2,Float64}}(undef, total_verts)
+    all_colors = Vector{SVector{4,Float64}}(undef, total_verts)
     all_faces = Vector{NTuple{3,Int}}(undef, total_faces)
 
     vert_offset = 0
@@ -41,6 +43,13 @@ function merge_meshes(meshes::Vector{TriangleMesh})
         copyto!(all_normals, vert_offset + 1, m.normals, 1, nv)
         copyto!(all_uvs, vert_offset + 1, m.uvs, 1, nv)
 
+        # Copy colors if present, else fill white
+        if !isempty(m.colors)
+            copyto!(all_colors, vert_offset + 1, m.colors, 1, nv)
+        else
+            fill!(view(all_colors, vert_offset+1:vert_offset+nv), SVector(1.0, 1.0, 1.0, 1.0))
+        end
+
         for i in 1:nf
             a, b, c = m.faces[i]
             all_faces[face_offset + i] = (a + vert_offset, b + vert_offset, c + vert_offset)
@@ -50,7 +59,7 @@ function merge_meshes(meshes::Vector{TriangleMesh})
         face_offset += nf
     end
 
-    TriangleMesh(all_verts, all_normals, all_faces, all_uvs)
+    TriangleMesh(all_verts, all_normals, all_faces, all_uvs, all_colors)
 end
 
 # ──────────────────────────────────────────────────────────────────
@@ -78,10 +87,18 @@ function segments_to_mesh(
     meshes = TriangleMesh[]
     sizehint!(meshes, length(segs))
 
+    # Compute max depth for normalization
+    max_depth = maximum(seg.depth for seg in segs; init=0)
+    norm_denom = max_depth > 0 ? Float64(max_depth) : 1.0
+
     for seg in segs
         r_start = base_radius * seg.width
         r_end = r_start * taper
-        m = cylinder_mesh(seg.start, seg.stop, r_start, r_end; segments=segments)
+        # Encode normalized depth in vertex color R channel
+        norm_depth = Float64(seg.depth) / norm_denom
+        seg_color = SVector(norm_depth, 1.0, 0.0, 1.0)
+        m = cylinder_mesh(seg.start, seg.stop, r_start, r_end;
+                          segments=segments, color=seg_color)
         if !isempty(m.vertices)
             push!(meshes, m)
         end

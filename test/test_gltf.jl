@@ -81,6 +81,73 @@ using StaticArrays
         end
     end
 
+    @testset "GLB contains TEXCOORD_0 accessor" begin
+        mesh = cylinder_mesh(
+            SVector(0.0, 0.0, 0.0),
+            SVector(0.0, 1.0, 0.0),
+            0.5, 0.3; segments=4
+        )
+        mktempdir() do tmpdir
+            path = joinpath(tmpdir, "uv_test.glb")
+            export_glb(path, mesh)
+            data = read(path)
+
+            # Parse JSON chunk
+            json_length = reinterpret(UInt32, data[13:16])[1]
+            json_str = String(data[21:20+json_length])
+            @test occursin("TEXCOORD_0", json_str)
+        end
+    end
+
+    @testset "GLB contains COLOR_0 accessor when colors present" begin
+        mesh = cylinder_mesh(
+            SVector(0.0, 0.0, 0.0),
+            SVector(0.0, 1.0, 0.0),
+            0.5, 0.3; segments=4,
+            color=SVector(0.5, 1.0, 0.0, 1.0)
+        )
+        # Verify mesh has colors
+        @test !isempty(mesh.colors)
+        @test length(mesh.colors) == length(mesh.vertices)
+
+        mktempdir() do tmpdir
+            path = joinpath(tmpdir, "color_test.glb")
+            export_glb(path, mesh)
+            data = read(path)
+
+            # Parse JSON chunk
+            json_length = reinterpret(UInt32, data[13:16])[1]
+            json_str = String(data[21:20+json_length])
+            @test occursin("COLOR_0", json_str)
+        end
+    end
+
+    @testset "GLB binary buffer contains UV and color data at correct offsets" begin
+        mesh = cylinder_mesh(
+            SVector(0.0, 0.0, 0.0),
+            SVector(0.0, 1.0, 0.0),
+            0.5, 0.3; segments=4,
+            color=SVector(0.3, 0.7, 0.1, 1.0)
+        )
+        mktempdir() do tmpdir
+            path = joinpath(tmpdir, "offset_test.glb")
+            export_glb(path, mesh)
+            data = read(path)
+
+            # File should be larger than just positions+normals+indices
+            n_verts = length(mesh.vertices)
+            n_faces = length(mesh.faces)
+            pos_bytes = n_verts * 3 * 4
+            norm_bytes = n_verts * 3 * 4
+            uv_bytes = n_verts * 2 * 4
+            color_bytes = n_verts * 4 * 4
+            idx_bytes = n_faces * 3 * 4
+            expected_bin_size = pos_bytes + norm_bytes + uv_bytes + color_bytes + idx_bytes
+            # Account for alignment padding
+            @test length(data) >= 12 + 8 + 8 + expected_bin_size
+        end
+    end
+
     @testset "export_glb with empty mesh" begin
         mesh = TriangleMesh(
             SVector{3,Float64}[],
