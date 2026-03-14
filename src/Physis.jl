@@ -24,6 +24,9 @@ include("geometry/tree_mesh.jl")
 include("render/gltf_export.jl")
 include("render/render3d_api.jl")
 
+# ── Blender Cycles integration ────────────────────────────────────
+include("blender/render.jl")
+
 # ── Species catalog ──────────────────────────────────────────────
 include("species/catalog.jl")
 include("species/registry.jl")
@@ -47,5 +50,6 @@ export BoundingBox3D
 export export_glb, render_lsystem_3d
 export LSystemDef, species_slug, substitute_draw_symbols
 export register_species!, get_species, list_species, list_categories
+export find_blender, generate_blender_script, render_photorealistic, render_species_photorealistic
 
 end # module Physis
