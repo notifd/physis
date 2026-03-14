@@ -32,19 +32,21 @@ MATERIAL_PARAMS = {
         "noise_scale_fine": 15.0,
         "noise_detail_fine": 12.0,
         "mapping_scale": (3.0, 3.0, 8.0),
-        "base_darken": 0.5,
-        "tip_lighten": 1.3,
+        "color_boost": 2.0,             # Multiply base color brightness
+        "noise_variation": 0.15,        # Subtle noise darkening
+        "height_darken_base": 0.9,      # Very gentle darkening at base
+        "height_lighten_tip": 1.1,      # Subtle lightening at tip
         "roughness_min": 0.65,
         "roughness_max": 0.95,
-        "bump_strength": 0.4,
+        "bump_strength": 0.3,
         "bump_distance": 0.02,
         "subsurface_weight": 0.05,
         "subsurface_radius": (0.3, 0.1, 0.05),
         "specular_ior": 0.3,
         "moss_enabled": True,
         "moss_height_max": 0.35,
-        "moss_color": (0.15, 0.35, 0.1, 1.0),
-        "moss_blend": 0.6,
+        "moss_color": (0.25, 0.50, 0.20, 1.0),
+        "moss_blend": 0.25,
     },
     "foliage": {
         "noise_scale_large": 8.0,
@@ -53,13 +55,15 @@ MATERIAL_PARAMS = {
         "noise_scale_fine": 25.0,
         "noise_detail_fine": 10.0,
         "mapping_scale": (5.0, 5.0, 5.0),
-        "base_darken": 0.6,
-        "tip_lighten": 1.5,
+        "color_boost": 1.8,
+        "noise_variation": 0.1,
+        "height_darken_base": 0.85,
+        "height_lighten_tip": 1.15,
         "roughness_min": 0.35,
         "roughness_max": 0.65,
         "bump_strength": 0.15,
         "bump_distance": 0.01,
-        "subsurface_weight": 0.2,
+        "subsurface_weight": 0.15,
         "subsurface_radius": (0.5, 0.3, 0.1),
         "specular_ior": 0.5,
         "moss_enabled": False,
@@ -168,30 +172,29 @@ track.up_axis = "UP_Y"
 # Depth of field
 cam_data.dof.use_dof = True
 cam_data.dof.focus_object = empty
-cam_data.dof.aperture_fstop = 4.0
+cam_data.dof.aperture_fstop = 5.6
 
 # ── 6. Three-point lighting ────────────────────────────────────────
 
-# 6a. Key light (Sun lamp) — sharp shadows, slightly warm
+# 6a. Key light (Sun lamp) — strong and warm
 sun_data = bpy.data.lights.new("KeySun", "SUN")
-sun_data.energy = 3.0
-sun_data.angle = math.radians(1.0)
-sun_data.color = (1.0, 0.98, 0.95)
+sun_data.energy = 12.0
+sun_data.angle = math.radians(2.0)
+sun_data.color = (1.0, 0.97, 0.92)
 sun_obj = bpy.data.objects.new("KeySun", sun_data)
-sun_obj.rotation_euler = (math.radians(50), math.radians(10), math.radians(30))
+sun_obj.rotation_euler = (math.radians(45), math.radians(15), math.radians(30))
 bpy.context.collection.objects.link(sun_obj)
 
-# 6b. Fill light (Area lamp) — cool sky bounce, opposite to camera
+# 6b. Fill light (Area lamp) — large soft cool fill
 fill_data = bpy.data.lights.new("FillLight", "AREA")
-fill_data.energy = 50.0
-fill_data.size = max_dim * 2.0
+fill_data.energy = 300.0
+fill_data.size = max_dim * 4.0
 fill_data.color = (0.85, 0.9, 1.0)
 fill_obj = bpy.data.objects.new("FillLight", fill_data)
-# Position opposite to camera
 fill_obj.location = (
-    center.x - distance * 0.5,
-    center.y + distance * 0.5,
-    center.z + distance * 0.3,
+    center.x - distance * 0.6,
+    center.y + distance * 0.6,
+    center.z + distance * 0.4,
 )
 fill_track = fill_obj.constraints.new(type="TRACK_TO")
 fill_track.target = empty
@@ -199,16 +202,16 @@ fill_track.track_axis = "TRACK_NEGATIVE_Z"
 fill_track.up_axis = "UP_Y"
 bpy.context.collection.objects.link(fill_obj)
 
-# 6c. Rim light (Spot lamp) — warm backlight
+# 6c. Rim light (Spot lamp) — warm backlight edge definition
 rim_data = bpy.data.lights.new("RimLight", "SPOT")
-rim_data.energy = 100.0
-rim_data.spot_size = math.radians(45)
+rim_data.energy = 400.0
+rim_data.spot_size = math.radians(60)
 rim_data.color = (1.0, 0.95, 0.85)
 rim_obj = bpy.data.objects.new("RimLight", rim_data)
 rim_obj.location = (
-    center.x - distance * 0.3,
-    center.y + distance * 0.8,
-    center.z + max_dim * 1.5,
+    center.x - distance * 0.4,
+    center.y + distance * 0.9,
+    center.z + max_dim * 1.8,
 )
 rim_track = rim_obj.constraints.new(type="TRACK_TO")
 rim_track.target = empty
@@ -216,7 +219,7 @@ rim_track.track_axis = "TRACK_NEGATIVE_Z"
 rim_track.up_axis = "UP_Y"
 bpy.context.collection.objects.link(rim_obj)
 
-# ── 6d. World lighting — procedural sky + volumetric atmosphere ────
+# ── 6d. World lighting — bright procedural sky ────────────────────
 
 world = bpy.data.worlds.new("PhysisWorld")
 scene.world = world
@@ -228,20 +231,13 @@ sky_node = node_tree.nodes.new("ShaderNodeTexSky")
 output_node = node_tree.nodes.new("ShaderNodeOutputWorld")
 
 sky_node.sky_type = "HOSEK_WILKIE"
-sky_node.sun_elevation = math.radians(30)
+sky_node.sun_elevation = math.radians(40)
 sky_node.sun_rotation = math.radians(45)
 
-bg_node.inputs["Strength"].default_value = 1.0
+bg_node.inputs["Strength"].default_value = 3.0
 
 node_tree.links.new(sky_node.outputs["Color"], bg_node.inputs["Color"])
 node_tree.links.new(bg_node.outputs["Background"], output_node.inputs["Surface"])
-
-# Volumetric atmosphere — subtle depth-dependent haze
-vol_scatter = node_tree.nodes.new("ShaderNodeVolumeScatter")
-vol_scatter.inputs["Color"].default_value = (0.9, 0.93, 1.0, 1.0)
-vol_scatter.inputs["Density"].default_value = 0.005
-vol_scatter.inputs["Anisotropy"].default_value = 0.3
-node_tree.links.new(vol_scatter.outputs["Volume"], output_node.inputs["Volume"])
 
 # ── 7. Ground plane with procedural earth material ─────────────────
 
@@ -253,7 +249,7 @@ if ground_plane:
     ground_obj = bpy.context.active_object
     ground_obj.name = "GroundPlane"
 
-    # Procedural earth material
+    # Procedural earth material — warm and visible
     ground_mat = bpy.data.materials.new("GroundMat")
     ground_mat.use_nodes = True
     gt = ground_mat.node_tree
@@ -265,23 +261,22 @@ if ground_plane:
     g_ramp = gt.nodes.new("ShaderNodeValToRGB")
     g_texcoord = gt.nodes.new("ShaderNodeTexCoord")
 
-    # Earth noise pattern
     g_noise.inputs["Scale"].default_value = 2.0
     g_noise.inputs["Detail"].default_value = 6.0
     g_noise.inputs["Roughness"].default_value = 0.7
 
-    # Color ramp: dark soil → medium earth → sandy → pebble
+    # Warm earth tones — clearly visible
     ramp = g_ramp.color_ramp
     ramp.elements[0].position = 0.0
-    ramp.elements[0].color = (0.08, 0.06, 0.04, 1.0)
+    ramp.elements[0].color = (0.30, 0.24, 0.18, 1.0)
     ramp.elements.new(0.35)
-    ramp.elements[1].color = (0.18, 0.14, 0.10, 1.0)
+    ramp.elements[1].color = (0.40, 0.34, 0.26, 1.0)
     ramp.elements.new(0.65)
-    ramp.elements[2].color = (0.30, 0.25, 0.18, 1.0)
+    ramp.elements[2].color = (0.48, 0.42, 0.34, 1.0)
     ramp.elements[3].position = 1.0
-    ramp.elements[3].color = (0.40, 0.36, 0.30, 1.0)
+    ramp.elements[3].color = (0.55, 0.48, 0.40, 1.0)
 
-    g_bsdf.inputs["Roughness"].default_value = 0.9
+    g_bsdf.inputs["Roughness"].default_value = 0.85
 
     gt.links.new(g_texcoord.outputs["Object"], g_noise.inputs["Vector"])
     gt.links.new(g_noise.outputs["Fac"], g_ramp.inputs["Fac"])
@@ -293,7 +288,15 @@ if ground_plane:
 
 # ── 8. Procedural shader material ──────────────────────────────────
 
-bark_color = ({{BARK_COLOR_R}}, {{BARK_COLOR_G}}, {{BARK_COLOR_B}}, 1.0)
+# Boost base color so it's clearly visible under lighting
+raw_color = ({{BARK_COLOR_R}}, {{BARK_COLOR_G}}, {{BARK_COLOR_B}})
+boost = params["color_boost"]
+bark_color = (
+    min(raw_color[0] * boost, 1.0),
+    min(raw_color[1] * boost, 1.0),
+    min(raw_color[2] * boost, 1.0),
+    1.0,
+)
 
 mat = bpy.data.materials.new("PhysisMaterial")
 mat.use_nodes = True
@@ -305,7 +308,7 @@ output = nt.nodes.new("ShaderNodeOutputMaterial")
 bsdf = nt.nodes.new("ShaderNodeBsdfPrincipled")
 nt.links.new(bsdf.outputs["BSDF"], output.inputs["Surface"])
 
-# ── LAYER 1: Base color from noise ──────────────────────────────
+# ── LAYER 1: Base color with subtle noise variation ──────────────
 
 # Texture coordinates (object space)
 tex_coord = nt.nodes.new("ShaderNodeTexCoord")
@@ -329,53 +332,62 @@ nt.links.new(mapping.outputs["Vector"], noise_fine.inputs["Vector"])
 # Mix noises 70/30 (large dominant)
 mix_noise = nt.nodes.new("ShaderNodeMix")
 mix_noise.data_type = 'FLOAT'
-mix_noise.inputs[0].default_value = 0.3  # Factor
-nt.links.new(noise_large.outputs["Fac"], mix_noise.inputs[2])  # A
-nt.links.new(noise_fine.outputs["Fac"], mix_noise.inputs[3])   # B
+mix_noise.inputs[0].default_value = 0.3
+nt.links.new(noise_large.outputs["Fac"], mix_noise.inputs[2])
+nt.links.new(noise_fine.outputs["Fac"], mix_noise.inputs[3])
 
 # Height gradient: object-space Z → normalize to [0,1]
 geometry = nt.nodes.new("ShaderNodeNewGeometry")
 sep_xyz = nt.nodes.new("ShaderNodeSeparateXYZ")
 height_map = nt.nodes.new("ShaderNodeMapRange")
 nt.links.new(geometry.outputs["Position"], sep_xyz.inputs["Vector"])
-# Map Z from bbox range to [0,1] — use approximate values, refined per-object
 height_map.inputs["From Min"].default_value = bbox_min.z
 height_map.inputs["From Max"].default_value = bbox_max.z
 height_map.inputs["To Min"].default_value = 0.0
 height_map.inputs["To Max"].default_value = 1.0
 nt.links.new(sep_xyz.outputs["Z"], height_map.inputs["Value"])
 
-# Color ramp for height-based darkening/lightening
+# Create a slightly darker variant for noise-based variation
+noise_dark = (
+    bark_color[0] * 0.75,
+    bark_color[1] * 0.75,
+    bark_color[2] * 0.75,
+    1.0,
+)
+# MIX between bark_color and darker variant, driven by noise
+color_x_noise = nt.nodes.new("ShaderNodeMix")
+color_x_noise.data_type = 'RGBA'
+color_x_noise.blend_type = 'MIX'
+color_x_noise.inputs[6].default_value = bark_color     # A = bright base
+color_x_noise.inputs[7].default_value = noise_dark     # B = darker variant
+# Scale noise factor down so it's subtle
+noise_factor = nt.nodes.new("ShaderNodeMath")
+noise_factor.operation = 'MULTIPLY'
+noise_factor.inputs[1].default_value = params["noise_variation"]
+nt.links.new(mix_noise.outputs[0], noise_factor.inputs[0])
+nt.links.new(noise_factor.outputs["Value"], color_x_noise.inputs[0])
+
+# Height-based tinting: gentle ramp from slightly darker base to slightly lighter tip
 height_ramp = nt.nodes.new("ShaderNodeValToRGB")
 hr = height_ramp.color_ramp
-darken = params["base_darken"]
-lighten = params["tip_lighten"]
+darken = params["height_darken_base"]
+lighten = params["height_lighten_tip"]
 hr.elements[0].position = 0.0
 hr.elements[0].color = (darken, darken, darken, 1.0)
 hr.elements[1].position = 1.0
 hr.elements[1].color = (lighten, lighten, lighten, 1.0)
 nt.links.new(height_map.outputs["Result"], height_ramp.inputs["Fac"])
 
-# Multiply bark_color by noise and height gradient
-# Step 1: bark_color * noise_mix
-color_x_noise = nt.nodes.new("ShaderNodeMix")
-color_x_noise.data_type = 'RGBA'
-color_x_noise.blend_type = 'MULTIPLY'
-color_x_noise.inputs[0].default_value = 0.6  # Factor
-color_x_noise.inputs[6].default_value = bark_color  # A
-nt.links.new(mix_noise.outputs[0], color_x_noise.inputs[7])  # B (scalar broadcast)
-
-# Step 2: result * height_gradient
+# Apply height gradient via MULTIPLY but with gentle values (0.9-1.1 range)
 color_x_height = nt.nodes.new("ShaderNodeMix")
 color_x_height.data_type = 'RGBA'
 color_x_height.blend_type = 'MULTIPLY'
-color_x_height.inputs[0].default_value = 0.6  # Factor
-nt.links.new(color_x_noise.outputs[2], color_x_height.inputs[6])   # A
-nt.links.new(height_ramp.outputs["Color"], color_x_height.inputs[7])  # B
+color_x_height.inputs[0].default_value = 1.0  # Full factor — but values are close to 1.0
+nt.links.new(color_x_noise.outputs[2], color_x_height.inputs[6])
+nt.links.new(height_ramp.outputs["Color"], color_x_height.inputs[7])
 
 # ── LAYER 2: Branch depth tinting (from vertex COLOR_0) ─────────
 
-# Try to use vertex colors — Blender imports COLOR_0 as "Col"
 vert_color = nt.nodes.new("ShaderNodeVertexColor")
 vert_color.layer_name = "Col"
 
@@ -383,11 +395,11 @@ sep_vc = nt.nodes.new("ShaderNodeSeparateXYZ")
 nt.links.new(vert_color.outputs["Color"], sep_vc.inputs["Vector"])
 
 # Depth factor = R channel (0=trunk, 1=twig)
-# Mix from base color (trunk) to lighter tip tint
+# Twigs get a lighter, slightly warmer tint
 tip_tint = (
-    min(bark_color[0] * 1.4, 1.0),
-    min(bark_color[1] * 1.6, 1.0),
-    min(bark_color[2] * 1.2, 1.0),
+    min(bark_color[0] * 1.3 + 0.15, 1.0),
+    min(bark_color[1] * 1.5 + 0.10, 1.0),
+    min(bark_color[2] * 1.2 + 0.08, 1.0),
     1.0,
 )
 depth_mix = nt.nodes.new("ShaderNodeMix")
@@ -400,39 +412,27 @@ depth_mix.inputs[7].default_value = tip_tint  # B = tip tint
 # ── LAYER 3: Moss overlay (bark only) ───────────────────────────
 
 if params["moss_enabled"]:
-    # Voronoi pattern for moss
     voronoi = nt.nodes.new("ShaderNodeTexVoronoi")
     voronoi.inputs["Scale"].default_value = 12.0
     voronoi.inputs["Randomness"].default_value = 0.8
     nt.links.new(mapping.outputs["Vector"], voronoi.inputs["Vector"])
 
-    # Mask moss to lower portion of tree
+    # Mask to lower portion of tree
     moss_mask = nt.nodes.new("ShaderNodeMath")
     moss_mask.operation = 'LESS_THAN'
     moss_mask.inputs[1].default_value = params["moss_height_max"]
     nt.links.new(height_map.outputs["Result"], moss_mask.inputs[0])
 
-    # Combine voronoi pattern with height mask
     moss_factor = nt.nodes.new("ShaderNodeMath")
     moss_factor.operation = 'MULTIPLY'
     nt.links.new(voronoi.outputs["Distance"], moss_factor.inputs[0])
     nt.links.new(moss_mask.outputs["Value"], moss_factor.inputs[1])
 
-    # Moss overlay
-    moss_mix = nt.nodes.new("ShaderNodeMix")
-    moss_mix.data_type = 'RGBA'
-    moss_mix.blend_type = 'OVERLAY'
-    moss_mix.inputs[0].default_value = params["moss_blend"]
-    nt.links.new(depth_mix.outputs[2], moss_mix.inputs[6])  # A = depth-tinted
-    moss_mix.inputs[7].default_value = params["moss_color"]  # B = moss color
-
-    # Scale factor by moss pattern
     final_factor = nt.nodes.new("ShaderNodeMath")
     final_factor.operation = 'MULTIPLY'
     nt.links.new(moss_factor.outputs["Value"], final_factor.inputs[0])
     final_factor.inputs[1].default_value = params["moss_blend"]
 
-    # Re-mix with controlled factor
     moss_final = nt.nodes.new("ShaderNodeMix")
     moss_final.data_type = 'RGBA'
     moss_final.blend_type = 'MIX'
@@ -440,10 +440,8 @@ if params["moss_enabled"]:
     nt.links.new(depth_mix.outputs[2], moss_final.inputs[6])
     moss_final.inputs[7].default_value = params["moss_color"]
 
-    # Connect final color to BSDF
     nt.links.new(moss_final.outputs[2], bsdf.inputs["Base Color"])
 else:
-    # No moss — connect depth-tinted directly
     nt.links.new(depth_mix.outputs[2], bsdf.inputs["Base Color"])
 
 # ── Surface detail ──────────────────────────────────────────────
@@ -464,8 +462,7 @@ bump.inputs["Distance"].default_value = params["bump_distance"]
 nt.links.new(noise_large.outputs["Fac"], bump.inputs["Height"])
 nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
 
-# Subsurface scattering
-# Twigs get more SSS than trunk (depth-dependent)
+# Subsurface scattering — depth dependent
 sss_map = nt.nodes.new("ShaderNodeMapRange")
 sss_map.inputs["From Min"].default_value = 0.0
 sss_map.inputs["From Max"].default_value = 1.0
@@ -489,7 +486,7 @@ scene.render.resolution_y = {{RESOLUTION_Y}}
 scene.render.image_settings.file_format = "PNG"
 scene.render.image_settings.color_mode = "RGBA"
 scene.render.filepath = r"{{OUTPUT_PATH}}"
-scene.render.film_transparent = True
+scene.render.film_transparent = False
 
 # ── 10. Render ─────────────────────────────────────────────────────
 

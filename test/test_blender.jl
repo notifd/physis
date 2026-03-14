@@ -93,8 +93,8 @@ Tier 1 tests run without Blender. Tier 2 tests require Blender installed.
         # Contains DOF
         @test occursin("use_dof", script)
         @test occursin("aperture_fstop", script)
-        # Contains volumetric atmosphere
-        @test occursin("ShaderNodeVolumeScatter", script)
+        # Contains sky lighting
+        @test occursin("HOSEK_WILKIE", script)
     end
 
     @testset "generate_blender_script without ground plane" begin

@@ -148,7 +148,7 @@ Build HTML for a 2D-only gallery card (fractals, etc).
 function build_2d_card(entry, svg_filename::String)
     """
             <div class="card">
-                <img src="$(svg_filename)" alt="$(entry.name)" loading="lazy">
+                <img src="$(svg_filename)" alt="$(entry.name)" loading="lazy" onclick="openLightbox(this)">
                 <div class="info">
                     <h3>$(entry.name)</h3>
                     <code>$(entry.rule_notation)</code>
@@ -173,7 +173,7 @@ function build_3d_card(entry, svg_filename::String, glb_filename::String)
                     <model-viewer src="$(glb_filename)" alt="$(entry.name) 3D model" auto-rotate camera-controls shadow-intensity="1" style="width:100%;height:300px;background:#111111;"></model-viewer>
                 </div>
                 <div class="media-view view-2d">
-                    <img src="$(svg_filename)" alt="$(entry.name)" loading="lazy">
+                    <img src="$(svg_filename)" alt="$(entry.name)" loading="lazy" onclick="openLightbox(this)">
                 </div>
                 <div class="info">
                     <h3>$(entry.name)</h3>
@@ -197,13 +197,13 @@ function build_3d_photo_card(entry, svg_filename::String, glb_filename::String, 
                     <button class="tab" onclick="toggleView(this, '2d')">2D</button>
                 </div>
                 <div class="media-view view-photo active">
-                    <img src="$(photo_filename)" alt="$(entry.name) photorealistic render" loading="lazy">
+                    <img src="$(photo_filename)" alt="$(entry.name) photorealistic render" loading="lazy" onclick="openLightbox(this)">
                 </div>
                 <div class="media-view view-3d">
                     <model-viewer src="$(glb_filename)" alt="$(entry.name) 3D model" auto-rotate camera-controls shadow-intensity="1" style="width:100%;height:300px;background:#111111;"></model-viewer>
                 </div>
                 <div class="media-view view-2d">
-                    <img src="$(svg_filename)" alt="$(entry.name)" loading="lazy">
+                    <img src="$(svg_filename)" alt="$(entry.name)" loading="lazy" onclick="openLightbox(this)">
                 </div>
                 <div class="info">
                     <h3>$(entry.name)</h3>
@@ -499,6 +499,48 @@ $(join(cards, "\n"))
             display: block;
             object-fit: cover;
         }
+        .card img[onclick] { cursor: pointer; }
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+        .lightbox.active { display: flex; }
+        .lightbox img {
+            max-width: 95vw;
+            max-height: 95vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+        }
+        .lightbox .lb-caption {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #e0e0e0;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 20px;
+            border-radius: 6px;
+        }
+        .lightbox .lb-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            line-height: 1;
+        }
     </style>
 </head>
 <body>
@@ -508,6 +550,12 @@ $(join(nav_links, "\n"))
     <h1>Physis — L-System Gallery</h1>
     <p class="subtitle">L-systems from <em>The Algorithmic Beauty of Plants</em> and classic fractals — plants with interactive 3D and photorealistic renders</p>
 $(join(sections_html, "\n"))
+    <!-- Lightbox overlay -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <button class="lb-close" onclick="closeLightbox()">&times;</button>
+        <img id="lb-img" src="" alt="">
+        <div class="lb-caption" id="lb-caption"></div>
+    </div>
     <script>
     function toggleView(btn, view) {
         var card = btn.closest('.card-3d');
@@ -516,6 +564,20 @@ $(join(sections_html, "\n"))
         btn.classList.add('active');
         card.querySelector('.view-' + view).classList.add('active');
     }
+    function openLightbox(img) {
+        var lb = document.getElementById('lightbox');
+        document.getElementById('lb-img').src = img.src;
+        document.getElementById('lb-caption').textContent = img.alt || '';
+        lb.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeLightbox();
+    });
     </script>
 </body>
 </html>"""
