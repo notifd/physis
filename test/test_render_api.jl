@@ -89,6 +89,20 @@ using StaticArrays
         @test save_render isa Function
     end
 
+    @testset "render2d and save_render throw clear error without backend" begin
+        # These tests must run BEFORE CairoMakie is loaded (test_cairomakie_ext.jl)
+        # to verify the fallback error path works.
+        seg = LineSegment2D(SVector(0.0, 0.0), SVector(1.0, 1.0))
+
+        ex1 = try render2d([seg]); nothing catch e; e end
+        @test ex1 isa ErrorException
+        @test occursin("CairoMakie", ex1.msg)
+
+        ex2 = try save_render("/tmp/test.png", [seg]); nothing catch e; e end
+        @test ex2 isa ErrorException
+        @test occursin("CairoMakie", ex2.msg)
+    end
+
     @testset "render_lsystem" begin
         @testset "Throws ArgumentError if no F segments produced" begin
             # Axiom with no F, rule that produces no F
