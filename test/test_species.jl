@@ -143,11 +143,11 @@ Tests that:
         end
     end
 
-    @testset "All 82 species registered" begin
-        @test length(list_species()) == 82
+    @testset "All 112 species registered" begin
+        @test length(list_species()) == 112
         # All names unique
         names = [s.name for s in list_species()]
-        @test length(unique(names)) == 82
+        @test length(unique(names)) == 112
     end
 
     @testset "All species produce segments" begin
@@ -163,12 +163,18 @@ Tests that:
 
     @testset "Category coverage" begin
         cats = list_categories()
-        @test length(cats) == 6
+        @test length(cats) == 12
         @test :fractal_curves in cats
         @test :dragon_family in cats
         @test :sierpinski_family in cats
         @test :space_filling in cats
         @test :plants_trees in cats
         @test :artistic_patterns in cats
+        @test :coniferous in cats
+        @test :ferns in cats
+        @test :tropical in cats
+        @test :flowers in cats
+        @test :grasses in cats
+        @test :succulents in cats
     end
 end

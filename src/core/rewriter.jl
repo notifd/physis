@@ -94,6 +94,24 @@ function _apply_first_match(rules::Vector{AbstractRule}, sym::AbstractSymbol,
     LString([sym])
 end
 
+"""
+Context-aware version: also checks ContextRule matching against the full LString.
+"""
+function _apply_first_match(rules::Vector{AbstractRule}, sym::AbstractSymbol,
+                            rng::AbstractRNG, ls::LString, index::Int)
+    for rule in rules
+        if rule isa ContextRule
+            if sym isa LSymbol && matches(rule.lhs, sym) &&
+               _rule_matches_context(rule, ls, index)
+                return rule.rhs
+            end
+        elseif _rule_matches(rule, sym)
+            return apply_rule(rule, sym, rng)
+        end
+    end
+    LString([sym])
+end
+
 # ──────────────────────────────────────────────────────────────────
 # rewrite_step — one generation
 # ──────────────────────────────────────────────────────────────────
@@ -106,14 +124,21 @@ is independently replaced according to the first matching rule
 in `rs`. Symbols with no matching rule pass through unchanged.
 """
 function rewrite_step(ls::LString, rs::RuleSet; rng::AbstractRNG=Random.default_rng())
+    # Check once if any rules are context-sensitive (avoid overhead when not needed)
+    has_context = any(any(r -> r isa ContextRule, rules) for rules in values(rs.rules))
+
     result = AbstractSymbol[]
-    for sym in ls
+    for (i, sym) in enumerate(ls.symbols)
         c = name(sym)
         rules = lookup(rs, c)
         if rules === nothing
             push!(result, sym)
         else
-            replacement = _apply_first_match(rules, sym, rng)
+            if has_context
+                replacement = _apply_first_match(rules, sym, rng, ls, i)
+            else
+                replacement = _apply_first_match(rules, sym, rng)
+            end
             append!(result, replacement.symbols)
         end
     end

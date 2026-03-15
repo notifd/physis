@@ -119,7 +119,8 @@ end
 # ──────────────────────────────────────────────────────────────────
 
 """
-    interpret3d(ls::LString; angle=25.0, step=1.0, width=1.0) -> Vector{LineSegment3D}
+    interpret3d(ls::LString; angle=25.0, step=1.0, width=1.0, step_scale=1.0,
+                collect_organs=false, tropism=nothing, tropism_strength=0.0)
 
 Interpret an L-string as 3D turtle graphics commands, returning line segments.
 
@@ -136,24 +137,39 @@ Interpret an L-string as 3D turtle graphics commands, returning line segments.
 - `"` — multiply step length by `step_scale` (Houdini length scaling)
 - `[` — push turtle state onto branch stack
 - `]` — pop turtle state from branch stack
+- `L` — record leaf organ placement (only when `collect_organs=true`)
+- `K` — record flower organ placement (only when `collect_organs=true`)
+- `Q` — record fruit organ placement (only when `collect_organs=true`)
 - All other symbols — ignored
+
+# Returns
+- When `collect_organs=false` (default): `Vector{LineSegment3D}`
+- When `collect_organs=true`: `Tuple{Vector{LineSegment3D}, Vector{OrganPlacement}}`
 
 # Arguments
 - `angle`: default rotation angle in degrees (default 25.0)
 - `step`: default forward step size (default 1.0)
 - `width`: default line width (default 1.0)
 - `step_scale`: multiplier applied to step when `"` is encountered (default 1.0)
+- `collect_organs`: whether to collect L/K/Q symbols as OrganPlacement (default false)
+- `tropism`: tropism direction vector, e.g. `SVector(0.0,-1.0,0.0)` for gravity (default nothing)
+- `tropism_strength`: strength of tropism effect applied after each F step (default 0.0)
 
-Reference: ABOP §1.5.3; Houdini L-System documentation (SideFX)
+Reference: ABOP §1.5.3, §3.3; Houdini L-System documentation (SideFX)
 """
 function interpret3d(ls::LString; angle::Real=25.0, step::Real=1.0, width::Real=1.0,
-                     step_scale::Real=1.0)
+                     step_scale::Real=1.0, collect_organs::Bool=false,
+                     tropism::Union{SVector{3,Float64}, Nothing}=nothing,
+                     tropism_strength::Real=0.0)
     turtle = TurtleState3D(; step=Float64(step), width=Float64(width))
     angle_rad = deg2rad(Float64(angle))
     scale = Float64(step_scale)
+    tropism_strength_f = Float64(tropism_strength)
     stack = TurtleState3D[]
     segments = LineSegment3D[]
     sizehint!(segments, count(s -> name(s) == 'F', ls))
+
+    organs = collect_organs ? OrganPlacement[] : nothing
 
     step_count = 0
     reorth_interval = 100
@@ -165,6 +181,13 @@ function interpret3d(ls::LString; angle::Real=25.0, step::Real=1.0, width::Real=
             new_pos = turtle.pos + d * turtle.heading
             push!(segments, LineSegment3D(turtle.pos, new_pos, turtle.width, turtle.depth))
             turtle.pos = new_pos
+            # Apply tropism after forward step
+            if tropism !== nothing && tropism_strength_f > 0.0
+                new_h, new_u = apply_tropism(turtle.heading, turtle.up, tropism, tropism_strength_f)
+                turtle.heading = new_h
+                turtle.up = new_u
+                turtle.left = cross(turtle.up, turtle.heading)
+            end
         elseif c == 'f'
             d = _get_step(sym, turtle.step)
             turtle.pos = turtle.pos + d * turtle.heading
@@ -217,6 +240,15 @@ function interpret3d(ls::LString; angle::Real=25.0, step::Real=1.0, width::Real=
             turtle.step = restored.step
             turtle.width = restored.width
             turtle.depth = restored.depth
+        elseif collect_organs && c == 'L'
+            push!(organs, OrganPlacement(
+                turtle.pos, turtle.heading, turtle.up, turtle.left, :leaf, turtle.width))
+        elseif collect_organs && c == 'K'
+            push!(organs, OrganPlacement(
+                turtle.pos, turtle.heading, turtle.up, turtle.left, :flower, turtle.width))
+        elseif collect_organs && c == 'Q'
+            push!(organs, OrganPlacement(
+                turtle.pos, turtle.heading, turtle.up, turtle.left, :fruit, turtle.width))
         end
 
         # Re-orthonormalize periodically to prevent drift
@@ -226,5 +258,5 @@ function interpret3d(ls::LString; angle::Real=25.0, step::Real=1.0, width::Real=
         end
     end
 
-    segments
+    collect_organs ? (segments, organs) : segments
 end
