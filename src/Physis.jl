@@ -25,6 +25,7 @@ include("geometry/leaf.jl")
 include("geometry/flower.jl")
 include("geometry/fruit.jl")
 include("geometry/tree_mesh.jl")
+include("geometry/lod.jl")
 
 # ── Algorithms ─────────────────────────────────────────────────────
 include("algorithms/tree_topology.jl")
@@ -56,6 +57,12 @@ include("species/tropical/tropical.jl")
 include("species/flowers/flowers.jl")
 include("species/grasses/grasses.jl")
 include("species/succulents/succulents.jl")
+include("species/aquatic/aquatic.jl")
+include("species/vines/vines.jl")
+include("species/shrubs/shrubs.jl")
+
+# ── Growth animation ─────────────────────────────────────────────
+include("render/animation.jl")
 
 # Re-export public API
 export AbstractSymbol, LSymbol, ParametricSymbol, LString
@@ -65,7 +72,7 @@ export rewrite_step, derive, apply_rule
 export LineSegment2D, interpret2d
 export LineSegment3D, interpret3d
 export BoundingBox2D, compute_bbox, render2d, save_render, render_lsystem
-export TriangleMesh, cylinder_mesh, merge_meshes, segments_to_mesh
+export TriangleMesh, cylinder_mesh, merge_meshes, segments_to_mesh, generate_lod
 export leaf_mesh, flower_mesh, petal_mesh, sphere_mesh, cone_mesh
 export OrganPlacement, build_tree_with_organs
 export TreeNode, build_tree, compute_pipe_radii
@@ -79,5 +86,6 @@ export generate_envelope, space_colonize, TreeBud
 export WeberPennParams, weber_penn_preset, generate_weber_penn
 export LightGrid, cast_shadow!, query_light, self_organize_tree
 export find_blender, generate_blender_script, render_photorealistic, render_species_photorealistic
+export animate_growth
 
 end # module Physis
